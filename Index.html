@@ -1,4 +1,881 @@
-/**
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Narwhal RSVP Evite</title>
+  <style>
+    /* Basic styling */
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    
+    /* Page wrapper */
+    .page-wrapper {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 15px;
+      box-sizing: border-box;
+      position: relative;
+    }
+    
+    /* Headers */
+    h1 {
+      margin-top: 20px;
+      color: #333;
+      position: relative;
+      z-index: 10;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+    }
+    
+    /* Event details section */
+    .event-details {
+      color: #333;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+      margin-bottom: 15px;
+      position: relative;
+      z-index: 10;
+    }
+    
+    /* Main container */
+    .container {
+      position: relative;
+      width: 95%;
+      height: 75vh;
+      margin: 0 auto 20px;
+      background-image: url('https://i.imgur.com/4pCJnLn.jpeg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    /* Semi-transparent overlay */
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.2);
+      z-index: 1;
+    }
+    
+    /* SVG path styling */
+    svg.debug-path {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    /* Narwhal container */
+    .narwhal-container {
+      position: absolute;
+      width: 200px;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
+    
+    .narwhal-container img {
+      width: 100%;
+      height: auto;
+    }
+    
+    /* RSVP button */
+    #openRsvpBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background-color: #67c8ff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s;
+    }
+    
+    #openRsvpBtn:hover {
+      background-color: #4da8db;
+    }
+    
+    /* Bubbles */
+    .bubble {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background-image: url('https://i.imgur.com/wYQf7YY.png');
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.3s, opacity 0.3s;
+      z-index: 5;
+    }
+    
+    .bubble-text {
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+      font-size: 14px;
+      max-width: 80%;
+      text-align: center;
+      pointer-events: none;
+    }
+    
+    /* Tiny bubbles */
+    .tiny-bubble {
+      position: absolute;
+      background-color: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 4;
+      box-shadow: 0 0 2px rgba(255, 255, 255, 0.6), inset 0 0 3px rgba(255, 255, 255, 0.5);
+    }
+    
+    /* Bubble animations */
+    @keyframes tinyBubbleFloatRight {
+      0% { transform: translate(0, 0) scale(0.8); opacity: 0.9; }
+      20% { transform: translate(-5px, -15px) scale(0.9); opacity: 0.8; }
+      100% { transform: translate(-25px, -50px) scale(1.1); opacity: 0; }
+    }
+    
+    @keyframes tinyBubbleFloatLeft {
+      0% { transform: translate(0, 0) scale(0.8); opacity: 0.9; }
+      20% { transform: translate(5px, -15px) scale(0.9); opacity: 0.8; }
+      100% { transform: translate(25px, -50px) scale(1.1); opacity: 0; }
+    }
+    
+    @keyframes float1 {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      15% { transform: translate(15px, -15px) rotate(3deg) scale(1.02); }
+      32% { transform: translate(5px, -45px) rotate(-2deg) scale(1.01); }
+      48% { transform: translate(-10px, -30px) rotate(-4deg) scale(0.98); }
+      65% { transform: translate(-15px, -50px) rotate(2deg) scale(1.03); }
+      82% { transform: translate(-5px, -20px) rotate(1deg) scale(0.99); }
+      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    }
+    
+    @keyframes float2 {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      18% { transform: translate(-10px, -25px) rotate(-3deg) scale(1.03); }
+      36% { transform: translate(5px, -55px) rotate(2deg) scale(0.99); }
+      54% { transform: translate(15px, -45px) rotate(5deg) scale(1.01); }
+      72% { transform: translate(8px, -35px) rotate(3deg) scale(1.02); }
+      90% { transform: translate(-5px, -15px) rotate(-2deg) scale(0.98); }
+      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    }
+    
+    @keyframes float3 {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      20% { transform: translate(8px, -30px) rotate(4deg) scale(1.02); }
+      40% { transform: translate(15px, -60px) rotate(1deg) scale(1.01); }
+      60% { transform: translate(-5px, -40px) rotate(-2deg) scale(0.99); }
+      80% { transform: translate(-12px, -25px) rotate(-4deg) scale(0.98); }
+      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    }
+    
+    @keyframes floatSmall {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      15% { transform: translate(15px, -25px) rotate(5deg) scale(1.03); }
+      30% { transform: translate(22px, -48px) rotate(-3deg) scale(1.01); }
+      45% { transform: translate(5px, -65px) rotate(4deg) scale(1.02); }
+      60% { transform: translate(-8px, -52px) rotate(-8deg) scale(0.99); }
+      80% { transform: translate(-15px, -30px) rotate(-5deg) scale(1.01); }
+      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    }
+    
+    @keyframes floatLarge {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      15% { transform: translate(5px, -10px) rotate(2deg) scale(1.01); }
+      30% { transform: translate(-3px, -25px) rotate(-1deg) scale(1.02); }
+      50% { transform: translate(-8px, -35px) rotate(-2deg) scale(1); }
+      70% { transform: translate(-4px, -25px) rotate(0deg) scale(1.01); }
+      85% { transform: translate(8px, -15px) rotate(1deg) scale(0.99); }
+      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    }
+    
+    @keyframes bobUpDown {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+      100% { transform: translateY(0); }
+    }
+    
+    @keyframes popEffect {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 0.5; }
+    }
+    
+    .bubble.confirmed {
+      opacity: 0.5;
+      animation: bobUpDown 3s ease-in-out infinite !important;
+    }
+    
+    /* Event details panel */
+    .event-details-panel {
+      position: relative;
+      width: 95%;
+      max-width: 600px;
+      margin: 0 auto 20px;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      z-index: 50;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .event-details-panel h3 {
+      background-color: #67c8ff;
+      color: white;
+      margin: 0;
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      text-shadow: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .event-header-button {
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.3);
+      border: none;
+      padding: 2px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .event-essential-info {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .event-details-content {
+      padding: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .event-details-collapsed .event-details-content {
+      max-height: 0;
+      padding: 0 15px;
+      overflow: hidden;
+      border-top: none;
+    }
+
+    .event-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #4285F4;
+    }
+
+    .event-detail {
+      margin-bottom: 8px;
+      font-size: 14px;
+      line-height: 1.4;
+      text-align: left;
+      text-shadow: none;
+    }
+
+    .event-datetime, .event-location-line {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .icon {
+      display: inline-block;
+      margin-right: 5px;
+      font-style: normal;
+      min-width: 18px;
+    }
+
+    .gift-info {
+      background-color: #f8f8f8;
+      padding: 8px;
+      border-radius: 5px;
+      border-left: 3px solid #67c8ff;
+    }
+
+    .map-link {
+      color: #4285F4;
+      text-decoration: none;
+      font-size: 12px;
+      margin-left: 5px;
+    }
+
+    .map-link:hover {
+      text-decoration: underline;
+    }
+
+    #toggleDetailsBtn {
+      display: block;
+      width: 100%;
+      background-color: #f1f1f1;
+      border: none;
+      padding: 5px;
+      margin-top: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    #toggleDetailsBtn:hover {
+      background-color: #e1e1e1;
+    }
+    
+    /* Modal overlay */
+    #modalOverlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    #modalContent {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 400px;
+      max-width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      text-align: left;
+      position: relative;
+    }
+    
+    #modalContent h2 {
+      margin-top: 0;
+      color: #4285F4;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    #modalContent button.close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: #999;
+    }
+    
+    #modalContent button.close:hover {
+      color: #333;
+    }
+    
+    /* Form styling */
+    #rsvpForm {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #444;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    
+    .radio-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 5px;
+    }
+    
+    .radio-option {
+      display: flex;
+      align-items: center;
+    }
+    
+    .radio-option input {
+      margin-right: 5px;
+    }
+    
+    button[type="submit"] {
+      background-color: #4285F4;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      transition: background-color 0.3s;
+    }
+    
+    button[type="submit"]:hover {
+      background-color: #3367d6;
+    }
+    
+    .success-message {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .success-message h3 {
+      color: #4CAF50;
+      margin-bottom: 15px;
+    }
+    
+    .required::after {
+      content: " *";
+      color: #e53935;
+    }
+    
+    #guestNamesSection {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      display: none;
+    }
+    
+    /* Responsive styles */
+    @media (max-width: 768px) {
+      .event-details-panel {
+        max-width: 100%;
+        width: 90%;
+        margin: 10px auto;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      }
+      
+      .container {
+        width: 98%;
+        height: 65vh;
+      }
+      
+      #openRsvpBtn {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin: 10px auto;
+        display: block;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      #modalContent {
+        width: 90%;
+        padding: 15px;
+      }
+      
+      .radio-group {
+        flex-direction: column;
+        gap: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <!-- Main RSVP button -->
+    <button id="openRsvpBtn">RSVP Now</button>
+    
+    <h1>You're Invited!</h1>
+    <div class="event-details">
+      <h2 id="event-title-header">Loading Event...</h2>
+      <p id="event-description-short">Please wait while we load the event details...</p>
+    </div>
+
+    <!-- Event Details Panel -->
+    <div class="event-details-panel event-details-collapsed">
+      <h3>
+        Event Details
+        <button class="event-header-button" id="headerToggleBtn">Show More</button>
+      </h3>
+      
+      <!-- Essential info - always visible -->
+      <div class="event-essential-info">
+        <div class="event-title" id="event-title">Loading...</div>
+        
+        <div class="event-datetime">
+          <i class="icon">📅</i> <span id="event-date">Loading...</span>
+        </div>
+        
+        <div class="event-datetime">
+          <i class="icon">⏰</i> <span id="event-time">Loading...</span>
+        </div>
+        
+        <div class="event-location-line">
+          <i class="icon">📍</i> <span id="event-location">Loading...</span>
+          <a href="#" id="location-link" target="_blank" class="map-link">[Map]</a>
+        </div>
+      </div>
+      
+      <!-- Additional details - collapsible -->
+      <div class="event-details-content">
+        <div class="event-detail" id="event-description">Loading...</div>
+        <div class="event-detail gift-info" id="event-gift-info"><i class="icon">🎁</i> <span>Loading...</span></div>
+        <div class="event-detail" id="event-dress-code"><i class="icon">👔</i> <span>Loading...</span></div>
+        <div class="event-detail" id="event-additional-info">Loading...</div>
+        <button id="toggleDetailsBtn">Hide Details</button>
+      </div>
+    </div>
+    
+    <div class="container" id="bubbleContainer">
+      <!-- SVG Path for narwhal movement -->
+      <svg class="debug-path">
+        <path id="motionPath" d="M 0 491 Q 0 491, 1 491 Q 2 491, 2 491 Q 5 491, 7 491 Q 12 491, 17 491 Q 24 489, 28 488 Q 31 488, 33 487 Q 39 485, 46 484 Q 56 481, 66 479 Q 74 478, 77 477 Q 79 477, 81 476 Q 85 475, 90 475 Q 99 471, 106 469 Q 113 468, 120 465 Q 124 463, 131 461 Q 138 458, 144 456 Q 148 454, 151 452 Q 154 450, 158 448 Q 163 445, 166 442 Q 171 438, 178 432 Q 187 425, 196 418 Q 207 409, 214 403 Q 221 397, 225 392 Q 231 384, 236 377 Q 245 366, 252 356 Q 257 347, 262 340 Q 266 334, 270 327 Q 275 322, 277 315 Q 279 311, 281 308 Q 282 305, 283 302 Q 284 298, 285 295 Q 286 292, 286 288 Q 286 285, 287 282 Q 287 280, 287 277 Q 287 275, 287 273 Q 287 272, 287 270 Q 286 269, 285 267 Q 284 266, 283 265 Q 282 264, 281 263 Q 279 261, 278 261 Q 277 260, 275 259 Q 273 258, 271 258 Q 270 257, 268 257 Q 266 257, 265 257 Q 263 257, 262 257 Q 260 257, 258 257 Q 257 257, 255 258 Q 253 259, 251 259 Q 248 261, 246 263 Q 244 264, 242 265 Q 240 267, 238 269 Q 235 271, 233 273 Q 231 275, 230 278 Q 228 280, 226 283 Q 224 285, 221 289 Q 220 292, 218 295 Q 216 299, 215 301 Q 212 307, 210 312 Q 208 315, 207 319 Q 204 323, 203 328 Q 201 333, 199 337 Q 197 342, 196 346 Q 195 350, 194 353 Q 192 358, 192 362 Q 191 367, 191 370 Q 190 376, 190 382 Q 190 390, 190 397 Q 190 401, 191 405 Q 191 407, 192 409 Q 193 413, 194 416 Q 197 422, 199 425 Q 201 428, 203 431 Q 205 434, 207 435 Q 208 437, 210 438 Q 213 440, 216 442 Q 222 445, 229 448 Q 236 450, 240 451 Q 245 451, 251 451 Q 260 451, 268 449 Q 277 448, 284 446 Q 290 445, 295 443 Q 302 441, 308 439 Q 314 436, 321 433 Q 325 431, 329 428 Q 334 424, 340 420 Q 346 415, 354 410 Q 359 406, 363 401 Q 369 395, 373 391 Q 378 385, 384 378 Q 388 374, 393 370 Q 398 367, 403 363 Q 408 360, 416 354 Q 422 351, 428 348 Q 432 346, 438 344 Q 442 343, 445 343 Q 451 343, 457 343 Q 465 343, 472 344 Q 479 345, 484 346 Q 488 348, 491 349 Q 493 350, 494 352 Q 496 353, 499 356 Q 500 357, 502 359 Q 503 361, 504 362 Q 506 365, 507 368 Q 508 373, 510 377 Q 512 380, 514 383 Q 515 384, 516 386 Q 516 387, 517 387 Q 517 388, 517 388 Q 517 388, 517 387 Q 514 383, 511 380 Q 510 379, 506 374 Q 503 371, 500 367 Q 496 364, 491 361 Q 486 359, 481 357 Q 477 356, 472 356 Q 470 356, 467 356 Q 464 356, 458 356 Q 452 356, 447 356 Q 442 356, 438 358 Q 433 360, 430 362 Q 425 365, 420 369 Q 417 371, 415 373 Q 413 374, 410 377 Q 407 379, 402 383 Q 399 387, 395 392 Q 390 399, 386 405 Q 381 414, 377 425 Q 374 431, 373 436 Q 372 438, 371 441 Q 371 442, 371 445 Q 370 448, 370 453 Q 370 461, 370 468 Q 371 474, 372 481 Q 374 485, 375 488 Q 378 490, 380 492 Q 383 494, 386 497 Q 390 501, 396 504 Q 405 511, 413 516 Q 423 519, 436 522 Q 445 522, 450 521 Q 455 520, 460 519 Q 468 518, 475 515 Q 481 512, 486 509 Q 487 508, 489 505 Q 490 503, 493 498 Q 496 493, 499 486 Q 502 478, 505 472 Q 507 467, 509 462 Q 509 459, 509 455 Q 509 451, 509 447 Q 509 442, 509 439 Q 508 437, 508 436 Q 506 434, 505 433 Q 504 432, 503 432 Q 503 432, 501 432 Q 499 432, 496 432 Q 493 433, 490 434 Q 486 438, 480 443 Q 476 447, 473 451 Q 471 453, 469 456 Q 467 461, 464 467 Q 463 473, 462 478 Q 462 482, 462 486 Q 463 487, 464 489 Q 464 490, 465 491 Q 467 492, 468 494 Q 471 495, 474 497 Q 477 497, 483 499 Q 493 499, 504 499 Q 511 498, 518 495 Q 525 493, 533 489 Q 540 486, 547 481 Q 552 477, 558 473 Q 565 466, 573 460 Q 579 452, 586 440 Q 591 429, 595 416 Q 599 402, 603 387 Q 607 372, 613 353 Q 614 344, 614 337 Q 614 333, 613 331 Q 613 330, 612 329 Q 612 328, 612 328 Q 611 328, 611 328 Q 610 328, 609 329 Q 607 332, 605 334 Q 602 338, 597 346 Q 591 355, 587 364 Q 582 379, 577 395 Q 573 410, 570 423 Q 568 433, 567 442 Q 566 450, 566 456 Q 566 462, 566 468 Q 566 473, 568 478 Q 569 481, 571 484 Q 572 486, 575 489 Q 577 492, 579 493 Q 582 495, 586 495 Q 594 496, 604 498 Q 614 497, 628 495 Q 637 492, 645 490 Q 651 486, 655 482 Q 662 475, 668 466 Q 673 456, 678 446 Q 684 434, 688 425 Q 692 414, 696 400 Q 698 388, 699 376 Q 699 364, 699 354 Q 699 348, 698 345 Q 697 343, 696 342 Q 695 342, 694 341 Q 693 341, 691 341 Q 690 341, 688 341 Q 686 342, 684 344 Q 682 349, 677 360 Q 674 367, 671 374 Q 668 383, 665 392 Q 661 402, 658 414 Q 655 425, 654 435 Q 653 445, 652 452 Q 652 459, 652 467 Q 652 472, 654 478 Q 656 482, 658 486 Q 660 489, 662 491 Q 664 493, 666 495 Q 669 497, 676 499 Q 682 499, 688 499 Q 694 497, 700 496 Q 707 494, 714 492 Q 720 490, 723 487 Q 725 484, 729 475 Q 732 468, 735 460 Q 737 454, 739 448 Q 740 445, 740 442 Q 740 439, 740 436 Q 739 432, 737 429 Q 736 427, 734 425 Q 733 425, 733 425 Q 732 425, 730 426 Q 729 427, 727 429 Q 726 432, 724 435 Q 722 442, 721 450 Q 721 457, 721 462 Q 721 467, 721 470 Q 721 474, 721 479 Q 721 482, 722 485 Q 723 488, 726 491 Q 730 495, 735 498 Q 741 501, 749 504 Q 759 505, 771 506 Q 784 507, 798 506 Q 806 504, 814 500 Q 821 497, 830 493 Q 840 488, 851 484 Q 858 480, 860 478 Q 861 475, 862 472 Q 862 464, 862 455 Q 862 451, 861 447 Q 860 443, 858 439 Q 856 437, 853 435 Q 851 434, 850 434 Q 848 434, 846 434 Q 844 434, 840 434 Q 838 434, 835 435 Q 833 436, 824 438 Q 819 440, 815 442 Q 811 444, 809 446 Q 807 449, 805 452 Q 803 455, 800 462 Q 797 470, 795 479 Q 794 486, 794 493 Q 794 498, 795 505 Q 797 508, 798 513 Q 800 516, 802 520 Q 806 525, 810 531 Q 814 534, 816 536 Q 818 537, 820 538 Q 823 540, 828 541 Q 833 543, 838 544 Q 841 544, 847 545 Q 850 545, 855 545 Q 858 545, 860 545 Q 862 544, 864 544 Q 865 543, 867 543 Q 869 543, 870 542 Q 872 542, 873 542 Q 873 542, 875 541 Q 876 540, 878 539 Q 880 539, 881 538 Q 881 537, 883 536 Q 885 535, 887 534 Q 888 532, 890 531 Q 891 530, 892 529 Q 893 528, 895 527 Q 896 525, 898 524 Q 899 522, 901 520 Q 903 518, 905 516 Q 910 512, 912 510 Q 914 508, 916 506 Q 918 504, 920 502 Q 924 499, 930 494 Q 935 488, 939 483 Q 943 477, 949 470 Q 954 463, 959 454 Q 965 445, 972 433 Q 976 424, 981 415 Q 984 407, 987 398 Q 989 390, 994 376 Q 999 364, 1005 349 Q 1009 336, 1012 322 Q 1013 309, 1013 293 Q 1013 283, 1010 275 Q 1009 272, 1008 268 Q 1006 266, 1003 261 Q 1000 257, 997 255 Q 995 254, 994 253 Q 993 253, 991 253 Q 989 253, 988 253 Q 987 253, 985 254 Q 984 256, 982 259 Q 979 264, 975 271 Q 972 281, 969 291 Q 967 300, 966 311 Q 964 322, 964 336 Q 964 351, 964 365 Q 964 378, 964 389 Q 964 403, 964 418 Q 966 435, 970 448 Q 972 460, 974 470 Q 977 479, 979 486 Q 981 491, 983 496 Q 986 501, 988 505 Q 992 509, 996 513 Q 1000 516, 1001 517 Q 1004 519, 1007 520 Q 1011 522, 1016 523 Q 1023 524, 1028 525 Q 1035 526, 1045 527 Q 1055 529, 1065 530 Q 1076 531, 1083 532 Q 1092 532, 1099 532 Q 1109 532, 1117 532 Q 1125 532, 1136 532 Q 1143 532, 1147 532 Q 1151 532, 1155 532 Q 1161 532, 1167 532 Q 1170 532, 1172 532 Q 1174 532, 1175 532 Q 1178 532, 1180 532 Q 1182 532, 1183 532 Q 1183 532, 1184 532 Q 1185 532, 1185 531" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" stroke-dasharray="8,4"></path>
+      </svg>
+      
+      <!-- Narwhal container -->
+      <div class="narwhal-container" id="narwhalContainer">
+        <img src="https://i.imgur.com/YXIiqDM.png" alt="Narwhal">
+      </div>
+      <!-- Bubbles will be added via JavaScript after successful RSVPs -->
+    </div>
+  </div>
+  
+  <!-- Modal for RSVP Form -->
+  <div id="modalOverlay">
+    <div id="modalContent">
+      <button class="close" id="closeModal">×</button>
+      
+      <!-- Main form -->
+      <div id="rsvpFormContainer">
+        <h2>RSVP Form</h2>
+        <form id="rsvpForm">
+          <div class="form-group">
+            <label for="nameInput" class="required">Your Name:</label>
+            <input type="text" id="nameInput" name="name" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="emailInput">Email:</label>
+            <input type="email" id="emailInput" name="email" placeholder="your@email.com">
+          </div>
+          
+          <div class="form-group">
+            <label for="phoneInput">Phone Number:</label>
+            <input type="tel" id="phoneInput" name="phone" placeholder="(555) 123-4567">
+          </div>
+          
+          <div class="form-group">
+            <label class="required">Will you be attending?</label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" id="attendingYes" name="attending" value="Y" required checked>
+                <label for="attendingYes">Yes, I'll be there!</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" id="attendingNo" name="attending" value="N">
+                <label for="attendingNo">Sorry, I can't make it</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" id="attendingMaybe" name="attending" value="Maybe">
+                <label for="attendingMaybe">Maybe</label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group" id="guestsGroup">
+            <label for="guestsInput">Number of guests (including yourself):</label>
+            <input type="number" id="guestsInput" name="guests" min="1" value="1">
+            
+            <div id="guestNamesSection">
+              <label for="guestNamesInput">Names of additional guests:</label>
+              <textarea id="guestNamesInput" name="guestNames" rows="2" placeholder="Please list the names of anyone coming with you"></textarea>
+            </div>
+          </div>
+          
+          <div class="form-group" id="dietaryGroup">
+            <label for="dietaryInput">Dietary restrictions or allergies:</label>
+            <textarea id="dietaryInput" name="dietary" rows="2" placeholder="Please list any dietary restrictions or allergies"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="commentsInput">Additional comments:</label>
+            <textarea id="commentsInput" name="comments" rows="3" placeholder="Anything else you'd like to share?"></textarea>
+          </div>
+          
+          <button type="submit">Submit RSVP</button>
+        </form>
+      </div>
+      
+      <!-- Success message (shown after form submission) -->
+      <div id="successMessage" class="success-message">
+        <h3>Thank You!</h3>
+        <p>Your RSVP has been successfully recorded.</p>
+        <p>We look forward to celebrating with you!</p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // REPLACE THIS URL with your actual Google Apps Script web app URL
+    const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+    
+    // Initialize DOM elements
+    const narwhal = document.getElementById("narwhalContainer");
+    const path = document.querySelector("#motionPath");
+    const modalOverlay = document.getElementById("modalOverlay");
+    const rsvpForm = document.getElementById("rsvpForm");
+    const rsvpFormContainer = document.getElementById("rsvpFormContainer");
+    const successMessage = document.getElementById("successMessage");
+    const nameInput = document.getElementById("nameInput");
+    const bubbleContainer = document.getElementById("bubbleContainer");
+    const openRsvpBtn = document.getElementById("openRsvpBtn");
+    const attendingYes = document.getElementById("attendingYes");
+    const attendingNo = document.getElementById("attendingNo");
+    const attendingMaybe = document.getElementById("attendingMaybe");
+    const guestsGroup = document.getElementById("guestsGroup");
+    const dietaryGroup = document.getElementById("dietaryGroup");
+    const guestsInput = document.getElementById("guestsInput");
+    const guestNamesSection = document.getElementById("guestNamesSection");
+    
+    // Event details elements
+    const eventTitleHeader = document.getElementById("event-title-header");
+    const eventDescShort = document.getElementById("event-description-short");
+    const detailsPanel = document.querySelector('.event-details-panel');
+    const headerToggleBtn = document.getElementById('headerToggleBtn');
+    const detailsToggleBtn = document.getElementById('toggleDetailsBtn');
+    
+    // Animation variables
+    let currentT = 0;
+    let lastTime = null;
+    let forward = true;
+    let prevAngle = null;
+    let angleSmoothing = 0.2;
+    
+    // Store existing bubbles for collision detection
+    const existingBubbles = [];
+    
+    // Narwhal bubble variables
+    let prevLeft = null;
+    let bubbleCounter = 0;
+    let autoBubbleInterval = null;
+    
+    // ==========================================================================
+    // ANIMATION FUNCTIONS
+    // ==========================================================================
+    
+    /**
+     * Normalize angle between -PI and PI to avoid jumps
+     */
+    function normalizeAngle(angle) {
+      while (angle > Math.PI) angle -= 2 * Math.PI;
+      while (angle < -Math.PI) angle += 2 * Math.PI;
+      return angle;
+    }
+    
+    /**
+     * Find shortest angle distance
+     */
+    function getAngleDifference(a, b) {
+      return normalizeAngle(b - a);
+    }
+    
+    /**
+     * Animate the narwhal along the SVG path
+     */
+    function animate(timestamp) {
+      if (!lastTime) {
+        lastTime = timestamp;
+        requestAnimationFrame(animate);
+        return;
+      }
+      
+      // Calculate time delta for consistent animation speed
+      const delta = timestamp - lastTime;
+      lastTime = timestamp;
+
+      // Calculate progression along path
+      const totalLength = path.getTotalLength();
+      const speed = 0.000035; // Adjusted for better speed with smoothing
+      currentT += (forward ? 1 : -1) * delta * speed;
+
+      // Reverse direction at the ends
+      if (currentT >= 1) {
+        currentT = 1;
+        forward = false;
+      } else if (currentT <= 0) {
+        currentT = 0;
+        forward = true;
+      }
+
+      // Get exact position on path
+      const pos = path.getPointAtLength(totalLength * currentT);
+      
+      // Calculate the ideal angle by looking ahead on the path
+      // Look further ahead for larger narwhal
+      const lookAheadDistance = 25;
+      const lookAheadT = Math.min(totalLength, totalLength * currentT + lookAheadDistance);
+      const ahead = path.getPointAtLength(lookAheadT);
+      const angle = Math.atan2(ahead.y - pos.y, ahead.x - pos.x);
+      
+      // Initialize prevAngle if this is the first frame
+      if (prevAngle === null) {
+        prevAngle = angle;
+      }
+      
+      // Smooth the angle to avoid jittery rotation
+      // Use the shortest angle distance for interpolation
+      const angleDiff = getAngleDifference(prevAngle, angle);
+      
+      // Adaptive smoothing - less smoothing for sharp turns
+      let currentSmoothing = angleSmoothing;
+      if (Math.abs(angleDiff) > 0.3) {
+        // Increase responsiveness for sharper turns
+        currentSmoothing = Math.min(0.4, angleSmoothing * 2);
+      }
+      
+      // Calculate smoothed angle
+      prevAngle = normalizeAngle(prevAngle + angleDiff * currentSmoothing);
+      
+      // Apply position from exact path coordinates - no smoothing on position
+      narwhal.style.left = `${pos.x}px`;
+      narwhal.style.top = `${pos.y}px`;
+      
+      // Apply smoothed rotation
+      narwhal.style.transform = `translate(-50%, -50%) rotate(${prevAngle}rad) scaleX(${forward ? 1 : -1})`;
+
+      requestAnimationFrame(animate);
+    }
+    
+    /**
+     * Create tiny bubbles from narwhal
+     */
+    function createTinyBubble(narwhalContainer, rect, isMovingRight) {
+      // Create bubble element
+      const bubble = document.createElement("div");
+      bubble.className = "tiny-bubble";
+      
+      // Random size
+      const size = Math.random() * 3 + 3;
+      bubble.style.width = size + "px";
+      bubble.style.height = size + "px";
+      
+      // Get container dimensions
+      const containerRect = bubbleContainer.getBoundingClientRect();
+      
+      // Get narwhal's center position
+      const narwhalCenterX = rect.left + (rect.width * 0.5);
+      const narwhalCenterY = rect.top + (rect.height * 0.5);
+      
+      // Position bubbles based on direction - more toward the tail
+      let offsetX, offsetY;
+      
+      if (isMovingRight) {
+        // When moving right, position bubbles at left (tail)
+        offsetX = -rect.width * 0.4;
+        offsetY = rect.height * 0.1;
+      } else {
+        // When moving left, position bubbles at right (tail)
+        offsetX = rect.width * 0.4;
+        offsetY = rect.height * 0.1;
+      }
+      
+      // Add slight random variation
+      offsetX += (Math.random() - 0.5) * 3;
+      offsetY += (Math.random() - 0.5) * 3;
+      
+      // Calculate final position
+      const bubbleX = narwhalCenterX + offsetX;
+      const bubbleY = narwhalCenterY + offsetY;
+      
+      // Convert absolute positions to percentages relative to the container
+      const bubbleXPercent = ((bubbleX - containerRect.left) / containerRect.width) * 100;
+      const bubbleYPercent = ((bubbleY - containerRect.top) / containerRect.height) * 100;
+      
+      // Set position
+      bubble.style.left = bubbleXPercent + "%";
+      bubble.style.top = bubbleYPercent + "%";
+      
+      // Set animation duration
+      const duration = 1.5 + Math.random();
+      
+      // Apply animation based on direction
+      bubble.style.animation = `tinyBubbleFloat${isMovingRight ? 'Right' : 'Left'} ${duration}s ease-out forwards`;
+      
+      // Add to the bubble container
+      bubbleContainer.appendChild(bubble);
+      
+      // Remove the bubble element when animation is done
+      setTimeout(() => {
+        if (bubble.parentNode) {
+          bubble.parentNode.removeChild(bubble);
+        }
+      }, duration * 1000);
+    }
+    
+    /**
+     * Track narwhal movement and create bubbles
+     */
+    function updateNarwhalBubbles() {
+      const rect = narwhal.getBoundingClientRect();
+      const currentLeft = rect.left;
+      
+      if (prevLeft !== null) {
+        // Check if we're moving
+        if (Math.abs(currentLeft - prevLeft) > 0.5) {
+          bubbleCounter++;
+          // Reduce frequency 
+          if (bubbleCounter % 6 === 0) {
+            // Get the direction
+            const isMovingRight = currentLeft > prevLeft;
+            createTinyBubble(narwhal, rect, isMovingRight);
+          }
+        }
+      }
+      
+      prevLeft = currentLeft;
+      requestAnimationFrame(updateNarwhalBubbles);
+    }
+    
+    /**
      * Create bubbles periodically regardless of movement
      */
     function spawnBubblesAutomatically() {
