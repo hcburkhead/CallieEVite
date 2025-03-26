@@ -1328,6 +1328,53 @@
         guestNamesSection.style.display = "none";
       }
     }
+
+    // Function to test your script URL directly
+    function testScriptUrl() {
+      // Display a loading message
+      const results = document.createElement('div');
+      results.id = 'urlTestResults';
+      results.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: white; padding: 10px; border: 1px solid #ccc; border-radius: 5px; max-width: 400px; max-height: 200px; overflow: auto; z-index: 9999;';
+      results.innerHTML = '<h3>Testing API...</h3><p>Please wait...</p>';
+      document.body.appendChild(results);
+      
+      // Test the getEventDetails endpoint
+      console.log("Testing API endpoint: " + SCRIPT_URL + "?action=getEventDetails");
+      fetch(`${SCRIPT_URL}?action=getEventDetails`)
+        .then(response => {
+          const status = response.status;
+          const ok = response.ok;
+          
+          results.innerHTML = `<h3>API Test Results</h3>
+            <p><strong>URL:</strong> ${SCRIPT_URL}</p>
+            <p><strong>Status:</strong> ${status} (${ok ? 'OK' : 'Failed'})</p>`;
+          
+          if (ok) {
+            return response.json().then(data => {
+              results.innerHTML += `<p><strong>Data received:</strong> Yes</p>
+                <p><strong>Event title:</strong> ${data.TITLE || 'Not found'}</p>
+                <button onclick="this.parentNode.remove()">Close</button>`;
+            });
+          } else {
+            results.innerHTML += `<p><strong>Error:</strong> Failed to get data</p>
+              <button onclick="this.parentNode.remove()">Close</button>`;
+          }
+        })
+        .catch(error => {
+          results.innerHTML = `<h3>API Test Failed</h3>
+            <p><strong>URL:</strong> ${SCRIPT_URL}</p>
+            <p><strong>Error:</strong> ${error.message}</p>
+            <button onclick="this.parentNode.remove()">Close</button>`;
+          console.error("API Test Error:", error);
+        });
+    }
+  
+  // Add a small test button to the page
+  const testButton = document.createElement('button');
+  testButton.textContent = 'Test API Connection';
+  testButton.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: #67c8ff; color: white; border: none; border-radius: 4px; padding: 10px; cursor: pointer; z-index: 9999;';
+  testButton.onclick = testScriptUrl;
+  document.body.appendChild(testButton);
     
     // ==========================================================================
     // EVENT LISTENERS
