@@ -115,6 +115,36 @@
     #openRsvpBtn:hover {
       background-color: #4da8db;
     }
+
+    /* Debug panel */
+    #debugPanel {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      font-size: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      max-width: 300px;
+      display: none;
+    }
+
+    #debugToggle {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      z-index: 1001;
+      background: #67c8ff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
     
     /* Bubbles */
     .bubble {
@@ -653,10 +683,26 @@
       </div>
     </div>
   </div>
+
+  <!-- Debug Panel -->
+  <button id="debugToggle">Debug</button>
+  <div id="debugPanel">
+    <h4>Debug Info</h4>
+    <div id="debugContent"></div>
+  </div>
   
   <script>
+    // ==========================================================================
+    // CONFIGURATION
+    // ==========================================================================
+    
     // Your Google Apps Script web app URL
+    // REPLACE THIS with your actual deployed script URL after deployment
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywM-xgnPxIicmO73rvt7yNN1VK5DmW9gS1bFGzSYro4ztvUjpVFxgpYRUAb2qbXe7TUw/exec';
+    
+    // ==========================================================================
+    // INITIALIZATION
+    // ==========================================================================
     
     // Initialize DOM elements
     const narwhal = document.getElementById("narwhalContainer");
@@ -675,6 +721,9 @@
     const dietaryGroup = document.getElementById("dietaryGroup");
     const guestsInput = document.getElementById("guestsInput");
     const guestNamesSection = document.getElementById("guestNamesSection");
+    const debugPanel = document.getElementById("debugPanel");
+    const debugToggle = document.getElementById("debugToggle");
+    const debugContent = document.getElementById("debugContent");
     
     // Event details elements
     const eventTitleHeader = document.getElementById("event-title-header");
@@ -697,6 +746,25 @@
     let prevLeft = null;
     let bubbleCounter = 0;
     let autoBubbleInterval = null;
+
+    // Debug functions
+    function logDebug(message) {
+      console.log(message);
+      
+      // Also add to debug panel
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = document.createElement('div');
+      logEntry.innerHTML = `<small>${timestamp}</small>: ${message}`;
+      debugContent.appendChild(logEntry);
+      
+      // Scroll to bottom of debug panel
+      debugContent.scrollTop = debugContent.scrollHeight;
+    }
+    
+    // Toggle debug panel
+    debugToggle.addEventListener('click', function() {
+      debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
+    });
     
     // ==========================================================================
     // ANIMATION FUNCTIONS
@@ -916,18 +984,22 @@
      * Load event details from the API
      */
     function loadEventDetails() {
+      logDebug("Loading event details from: " + SCRIPT_URL);
+      
       fetch(`${SCRIPT_URL}?action=getEventDetails`)
         .then(response => {
+          logDebug("Event details response status: " + response.status);
           if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error('Network response was not ok: ' + response.status);
           }
           return response.json();
         })
         .then(details => {
+          logDebug("Event details loaded successfully");
           displayEventDetails(details);
         })
         .catch(error => {
-          console.error("Error loading event details:", error);
+          logDebug("Error loading event details: " + error.message);
           // Use fallback data
           displayEventDetails(getFallbackEventDetails());
         });
@@ -937,6 +1009,7 @@
      * Fallback event details in case API fails
      */
     function getFallbackEventDetails() {
+      logDebug("Using fallback event details");
       return {
         TITLE: "Callie's Birthday Celebration",
         DATE: "Saturday, April 28, 2025",
@@ -997,6 +1070,8 @@
           detail.style.display = "none";
         }
       });
+      
+      logDebug("Event details displayed: " + details.TITLE);
     }
     
     /**
@@ -1044,42 +1119,55 @@
      * Load existing RSVPs from the API
      */
     function loadExistingRsvps() {
-      console.log("Fetching RSVPs from: " + SCRIPT_URL);
+      logDebug("Fetching RSVPs from: " + SCRIPT_URL);
       
       fetch(`${SCRIPT_URL}?action=getExistingRsvps`)
         .then(response => {
-          console.log("API Response status:", response.status);
+          logDebug("API Response status: " + response.status);
           if (!response.ok) {
             throw new Error('Network response was not ok: ' + response.status);
           }
           return response.json();
         })
         .then(rsvps => {
-          console.log("RSVPs received:", rsvps);
+          logDebug("RSVPs received: " + JSON.stringify(rsvps));
           if (rsvps && rsvps.length > 0) {
-            console.log(`Creating ${rsvps.length} RSVP bubbles`);
-            // Clear any sample bubbles first
-            document.querySelectorAll('.bubble').forEach(bubble => {
+            logDebug(`Creating ${rsvps.length} RSVP bubbles`);
+            
+            // Clear any existing bubbles first (except permanent ones)
+            const existingBubblesToRemove = document.querySelectorAll('.bubble:not([data-permanent="true"])');
+            existingBubblesToRemove.forEach(bubble => {
+              bubble.remove();
+            });
+            
+            // Remove them from our tracking array too
+            const indexesToRemove = [];
+            existingBubbles.forEach((bubble, index) => {
               if (!bubble.hasAttribute("data-permanent")) {
-                bubble.remove();
+                indexesToRemove.push(index);
               }
             });
+            
+            for (let i = indexesToRemove.length - 1; i >= 0; i--) {
+              existingBubbles.splice(indexesToRemove[i], 1);
+            }
             
             // Create bubbles for each RSVP
             rsvps.forEach(rsvp => {
               // Only create bubbles for "Yes" responses
               if (rsvp.attending === "Y") {
-                console.log(`Creating bubble for ${rsvp.name}, status: ${rsvp.status}`);
+                logDebug(`Creating bubble for ${rsvp.name}, status: ${rsvp.status}`);
                 createBubble(rsvp.name, rsvp.status === "Confirmed");
               }
             });
           } else {
-            console.log("No RSVPs found, creating sample bubbles");
+            logDebug("No RSVPs found, creating sample bubbles");
             // Create sample bubbles if no RSVPs
             createSampleBubbles();
           }
         })
         .catch(error => {
+          logDebug("Error loading RSVPs: " + error.message);
           console.error("Error loading RSVPs:", error);
           // Create sample bubbles on error
           createSampleBubbles();
@@ -1090,7 +1178,27 @@
      * Create sample bubbles for testing/preview
      */
     function createSampleBubbles() {
-      console.log("Creating sample bubbles");
+      logDebug("Creating sample bubbles");
+      
+      // Clear any existing bubbles first (except permanent ones)
+      const existingBubblesToRemove = document.querySelectorAll('.bubble:not([data-permanent="true"])');
+      existingBubblesToRemove.forEach(bubble => {
+        bubble.remove();
+      });
+      
+      // Remove them from our tracking array too
+      const indexesToRemove = [];
+      existingBubbles.forEach((bubble, index) => {
+        if (!bubble.hasAttribute("data-permanent")) {
+          indexesToRemove.push(index);
+        }
+      });
+      
+      for (let i = indexesToRemove.length - 1; i >= 0; i--) {
+        existingBubbles.splice(indexesToRemove[i], 1);
+      }
+      
+      // Create sample bubbles
       const sampleNames = ["Jane Smith", "John Doe", "Alex Johnson", "Samantha Lee"];
       sampleNames.forEach((name, index) => {
         const bubble = createBubble(name, index < 2);
@@ -1111,12 +1219,14 @@
         })
         .then(confirmedNames => {
           if (confirmedNames && confirmedNames.length > 0) {
+            logDebug(`Found ${confirmedNames.length} confirmed RSVPs`);
             confirmedNames.forEach(name => {
               confirmBubble(name);
             });
           }
         })
         .catch(error => {
+          logDebug("Error checking confirmed RSVPs: " + error.message);
           console.error("Error checking confirmed RSVPs:", error);
         });
     }
@@ -1189,7 +1299,7 @@
       }
       
       // If we couldn't find a non-overlapping position, return a fallback
-      console.log("Could not find non-overlapping position after " + maxAttempts + " attempts");
+      logDebug("Could not find non-overlapping position after " + maxAttempts + " attempts");
       return {
         left: Math.random() * 70 + 15, // Adding more margin to edges
         top: Math.random() * 70 + 15   // Adding more margin to edges
@@ -1328,53 +1438,6 @@
         guestNamesSection.style.display = "none";
       }
     }
-
-    // Function to test your script URL directly
-    function testScriptUrl() {
-      // Display a loading message
-      const results = document.createElement('div');
-      results.id = 'urlTestResults';
-      results.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: white; padding: 10px; border: 1px solid #ccc; border-radius: 5px; max-width: 400px; max-height: 200px; overflow: auto; z-index: 9999;';
-      results.innerHTML = '<h3>Testing API...</h3><p>Please wait...</p>';
-      document.body.appendChild(results);
-      
-      // Test the getEventDetails endpoint
-      console.log("Testing API endpoint: " + SCRIPT_URL + "?action=getEventDetails");
-      fetch(`${SCRIPT_URL}?action=getEventDetails`)
-        .then(response => {
-          const status = response.status;
-          const ok = response.ok;
-          
-          results.innerHTML = `<h3>API Test Results</h3>
-            <p><strong>URL:</strong> ${SCRIPT_URL}</p>
-            <p><strong>Status:</strong> ${status} (${ok ? 'OK' : 'Failed'})</p>`;
-          
-          if (ok) {
-            return response.json().then(data => {
-              results.innerHTML += `<p><strong>Data received:</strong> Yes</p>
-                <p><strong>Event title:</strong> ${data.TITLE || 'Not found'}</p>
-                <button onclick="this.parentNode.remove()">Close</button>`;
-            });
-          } else {
-            results.innerHTML += `<p><strong>Error:</strong> Failed to get data</p>
-              <button onclick="this.parentNode.remove()">Close</button>`;
-          }
-        })
-        .catch(error => {
-          results.innerHTML = `<h3>API Test Failed</h3>
-            <p><strong>URL:</strong> ${SCRIPT_URL}</p>
-            <p><strong>Error:</strong> ${error.message}</p>
-            <button onclick="this.parentNode.remove()">Close</button>`;
-          console.error("API Test Error:", error);
-        });
-    }
-  
-  // Add a small test button to the page
-  const testButton = document.createElement('button');
-  testButton.textContent = 'Test API Connection';
-  testButton.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: #67c8ff; color: white; border: none; border-radius: 4px; padding: 10px; cursor: pointer; z-index: 9999;';
-  testButton.onclick = testScriptUrl;
-  document.body.appendChild(testButton);
     
     // ==========================================================================
     // EVENT LISTENERS
@@ -1433,6 +1496,8 @@
         comments: document.getElementById("commentsInput").value.trim()
       };
       
+      logDebug("Submitting RSVP for: " + name);
+      
       // Show saving indicator
       const submitBtn = rsvpForm.querySelector('button[type="submit"]');
       const originalBtnText = submitBtn.textContent;
@@ -1448,12 +1513,15 @@
         }
       })
       .then(response => {
+        logDebug("RSVP submission response status: " + response.status);
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error('Network response was not ok: ' + response.status);
         }
         return response.json();
       })
       .then(response => {
+        logDebug("RSVP saved successfully for: " + name);
+        
         // Reset button
         submitBtn.textContent = originalBtnText;
         submitBtn.disabled = false;
@@ -1484,6 +1552,8 @@
         }, 3000);
       })
       .catch(error => {
+        logDebug("Error saving RSVP: " + error.message);
+        
         // Reset button
         submitBtn.textContent = originalBtnText;
         submitBtn.disabled = false;
@@ -1495,11 +1565,56 @@
     });
     
     // ==========================================================================
+    // TEST FUNCTIONALITY
+    // ==========================================================================
+    
+    /**
+     * Test API connection directly
+     */
+    function testApiConnection() {
+      logDebug("Testing API connection to: " + SCRIPT_URL);
+      
+      fetch(`${SCRIPT_URL}?action=getEventDetails`)
+        .then(response => {
+          const status = response.status;
+          const statusText = response.statusText;
+          
+          logDebug(`API Test Result: ${status} ${statusText}`);
+          
+          if (response.ok) {
+            response.json().then(data => {
+              logDebug("Data received successfully: " + JSON.stringify(data).substring(0, 100) + "...");
+            });
+          } else {
+            logDebug("API request failed");
+          }
+        })
+        .catch(error => {
+          logDebug("API test error: " + error.message);
+        });
+    }
+    
+    // Add test button to debug panel
+    const testApiButton = document.createElement('button');
+    testApiButton.textContent = "Test API Connection";
+    testApiButton.style.marginTop = "10px";
+    testApiButton.style.padding = "5px";
+    testApiButton.onclick = testApiConnection;
+    debugPanel.appendChild(testApiButton);
+    
+    // ==========================================================================
     // INITIALIZATION
     // ==========================================================================
     
     // When the page loads, initialize everything
     window.onload = function() {
+      logDebug("Application initializing...");
+      
+      // Check script URL is set
+      if (SCRIPT_URL === 'YOUR_SCRIPT_URL_HERE') {
+        logDebug("WARNING: Script URL is not set! Please update with your deployed Apps Script URL");
+      }
+      
       // Start the SVG path animation
       requestAnimationFrame(animate);
       
@@ -1520,6 +1635,7 @@
         
         const emptyBubble = document.createElement("div");
         emptyBubble.className = "bubble";
+        emptyBubble.setAttribute("data-permanent", "true"); // Mark as permanent decoration
         emptyBubble.style.top = position.top + "%";
         emptyBubble.style.left = position.left + "%";
         emptyBubble.style.width = size + "px";
@@ -1541,6 +1657,8 @@
       // Start the periodic check for confirmed RSVPs
       checkForConfirmedRsvps();
       setInterval(checkForConfirmedRsvps, 60000); // Check every minute
+      
+      logDebug("Initialization complete");
     };
   </script>
 </body>
