@@ -656,7 +656,13 @@
   
   <script>
     // UPDATE THIS URL with your actual deployed Google Apps Script web app URL
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMEVsjd8g4cr-i-e4H4PfL82PMePVU5nq6uDnUT977ejGTWLSwJFgE0FA574YRJB2cZA/exec'; // You'll get this after deploying the script
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwUQMiuZIZBaxG5p986ZhYpZmy4ygTZVym6icHWAQcpjPoXA2AmOt719bUr5EoX15JYrQ/exec'; // You'll get this after deploying the script
+    
+    // Check if the script URL has been updated
+    if (SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbwUQMiuZIZBaxG5p986ZhYpZmy4ygTZVym6icHWAQcpjPoXA2AmOt719bUr5EoX15JYrQ/exec') {
+      console.error("ERROR: You need to update the SCRIPT_URL with your actual deployed Google Apps Script URL!");
+      alert("Error: The web app is not properly configured. The script URL hasn't been set.");
+    }
     
     // Initialize DOM elements
     const narwhal = document.getElementById("narwhalContainer");
@@ -1044,23 +1050,37 @@
      * Load existing RSVPs from the API
      */
     function loadExistingRsvps() {
+      console.log("Fetching RSVPs from: " + SCRIPT_URL);
+      
       fetch(`${SCRIPT_URL}?action=getExistingRsvps`)
         .then(response => {
+          console.log("API Response status:", response.status);
           if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error('Network response was not ok: ' + response.status);
           }
           return response.json();
         })
         .then(rsvps => {
+          console.log("RSVPs received:", rsvps);
           if (rsvps && rsvps.length > 0) {
+            console.log(`Creating ${rsvps.length} RSVP bubbles`);
+            // Clear any sample bubbles first
+            document.querySelectorAll('.bubble').forEach(bubble => {
+              if (!bubble.hasAttribute("data-permanent")) {
+                bubble.remove();
+              }
+            });
+            
             // Create bubbles for each RSVP
             rsvps.forEach(rsvp => {
               // Only create bubbles for "Yes" responses
               if (rsvp.attending === "Y") {
+                console.log(`Creating bubble for ${rsvp.name}, status: ${rsvp.status}`);
                 createBubble(rsvp.name, rsvp.status === "Confirmed");
               }
             });
           } else {
+            console.log("No RSVPs found, creating sample bubbles");
             // Create sample bubbles if no RSVPs
             createSampleBubbles();
           }
@@ -1076,9 +1096,11 @@
      * Create sample bubbles for testing/preview
      */
     function createSampleBubbles() {
+      console.log("Creating sample bubbles");
       const sampleNames = ["Jane Smith", "John Doe", "Alex Johnson", "Samantha Lee"];
       sampleNames.forEach((name, index) => {
-        createBubble(name, index < 2);
+        const bubble = createBubble(name, index < 2);
+        bubble.setAttribute("data-sample", "true");
       });
     }
     
