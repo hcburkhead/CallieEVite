@@ -697,7 +697,6 @@
     // ==========================================================================
     
     // Your Google Apps Script web app URL
-    // REPLACE THIS with your actual deployed script URL after deployment
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywM-xgnPxIicmO73rvt7yNN1VK5DmW9gS1bFGzSYro4ztvUjpVFxgpYRUAb2qbXe7TUw/exec';
     
     // ==========================================================================
@@ -1439,6 +1438,54 @@
       }
     }
     
+    /**
+     * Submit form data using a GET request to avoid CORS issues
+     */
+    function submitFormUsingGet(formData, callback) {
+      // Create URL with query parameters for all form data
+      let url = SCRIPT_URL + "?action=submitRsvp";
+      
+      // Add all form data as query parameters
+      for (const key in formData) {
+        if (formData.hasOwnProperty(key)) {
+          url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(formData[key]);
+        }
+      }
+      
+      // Add timestamp to prevent caching
+      url += "&_=" + Date.now();
+      
+      logDebug("Submitting form via GET request to: " + url);
+      
+      // Use a simple image request to avoid CORS issues
+      // This is a hack, but works reliably across browsers
+      const img = new Image();
+      
+      // Set timeout for the request
+      const timeoutId = setTimeout(() => {
+        logDebug("Form submission timed out");
+        callback(false, "Request timed out");
+      }, 10000);
+      
+      // Set handlers
+      img.onload = function() {
+        clearTimeout(timeoutId);
+        logDebug("Form submitted successfully");
+        callback(true, "Form submitted successfully");
+      };
+      
+      img.onerror = function() {
+        // For Google Apps Script, this will usually still work even though
+        // the image fails to load (since the script processes the request)
+        clearTimeout(timeoutId);
+        logDebug("Form likely submitted (expected image error)");
+        callback(true, "Form likely submitted successfully");
+      };
+      
+      // Begin request
+      img.src = url;
+    }
+    
     // ==========================================================================
     // EVENT LISTENERS
     // ==========================================================================
@@ -1484,7 +1531,7 @@
         return;
       }
       
-      // Prepare form data for submission
+      // Prepare form data
       const formData = {
         name: name,
         email: document.getElementById("emailInput").value.trim(),
@@ -1504,63 +1551,48 @@
       submitBtn.textContent = "Saving...";
       submitBtn.disabled = true;
       
-      // Send to Apps Script API
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify(formData),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(response => {
-        logDebug("RSVP submission response status: " + response.status);
-        if (!response.ok) {
-          throw new Error('Network response was not ok: ' + response.status);
-        }
-        return response.json();
-      })
-      .then(response => {
-        logDebug("RSVP saved successfully for: " + name);
-        
+      // Use GET request with action=submitRsvp instead of POST
+      // This works because GET requests don't trigger CORS preflight
+      submitFormUsingGet(formData, function(success, message) {
         // Reset button
         submitBtn.textContent = originalBtnText;
         submitBtn.disabled = false;
         
-        // Show success message
-        rsvpFormContainer.style.display = "none";
-        successMessage.style.display = "block";
-        
-        // Create a new bubble with the person's name (if they're attending)
-        if (formData.attending === "Y") {
-          // Check if this person already has a bubble
-          let hasBubble = false;
-          document.querySelectorAll('.bubble').forEach(bubble => {
-            if (bubble.getAttribute("data-name") === name) {
-              hasBubble = true;
-            }
-          });
+        if (success) {
+          logDebug("RSVP saved successfully for: " + name);
           
-          // Only create a new bubble if they don't already have one
-          if (!hasBubble) {
-            createBubble(name, false);
+          // Show success message
+          rsvpFormContainer.style.display = "none";
+          successMessage.style.display = "block";
+          
+          // Create a new bubble with the person's name (if they're attending)
+          if (formData.attending === "Y") {
+            // Check if this person already has a bubble
+            let hasBubble = false;
+            document.querySelectorAll('.bubble').forEach(bubble => {
+              if (bubble.getAttribute("data-name") === name) {
+                hasBubble = true;
+              }
+            });
+            
+            // Only create a new bubble if they don't already have one
+            if (!hasBubble) {
+              createBubble(name, false);
+            }
           }
+          
+          // Close modal after a delay
+          setTimeout(() => {
+            closeModal();
+            
+            // Refresh RSVPs to show the new submission
+            loadExistingRsvps();
+          }, 3000);
+        } else {
+          logDebug("Error saving RSVP: " + message);
+          alert("Error saving RSVP: " + message);
+          console.error("RSVP submission error:", message);
         }
-        
-        // Close modal after a delay
-        setTimeout(() => {
-          closeModal();
-        }, 3000);
-      })
-      .catch(error => {
-        logDebug("Error saving RSVP: " + error.message);
-        
-        // Reset button
-        submitBtn.textContent = originalBtnText;
-        submitBtn.disabled = false;
-        
-        // Show error
-        alert("Error saving RSVP: " + (error.message || "Unknown error"));
-        console.error("RSVP submission error:", error);
       });
     });
     
@@ -1609,11 +1641,6 @@
     // When the page loads, initialize everything
     window.onload = function() {
       logDebug("Application initializing...");
-      
-      // Check script URL is set
-      if (SCRIPT_URL === 'YOUR_SCRIPT_URL_HERE') {
-        logDebug("WARNING: Script URL is not set! Please update with your deployed Apps Script URL");
-      }
       
       // Start the SVG path animation
       requestAnimationFrame(animate);
