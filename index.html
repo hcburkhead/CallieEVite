@@ -655,14 +655,8 @@
   </div>
   
   <script>
-    // UPDATE THIS URL with your actual deployed Google Apps Script web app URL
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwUQMiuZIZBaxG5p986ZhYpZmy4ygTZVym6icHWAQcpjPoXA2AmOt719bUr5EoX15JYrQ/exec'; // You'll get this after deploying the script
-    
-    // Check if the script URL has been updated
-    if (SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbwUQMiuZIZBaxG5p986ZhYpZmy4ygTZVym6icHWAQcpjPoXA2AmOt719bUr5EoX15JYrQ/exec') {
-      console.error("ERROR: You need to update the SCRIPT_URL with your actual deployed Google Apps Script URL!");
-      alert("Error: The web app is not properly configured. The script URL hasn't been set.");
-    }
+    // Your Google Apps Script web app URL
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwUQMiuZIZBaxG5p986ZhYpZmy4ygTZVym6icHWAQcpjPoXA2AmOt719bUr5EoX15JYrQ/exec';
     
     // Initialize DOM elements
     const narwhal = document.getElementById("narwhalContainer");
