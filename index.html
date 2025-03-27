@@ -1,37 +1,4 @@
-/**
-     * Adjust the SVG path and animation for mobile screens
-     */
-    function adjustPathForMobile() {
-      // If it's a mobile device
-      if (window.innerWidth <= 768) {
-        // Scale down the path for mobile
-        const totalLength = path.getTotalLength();
-        for (let i = 0; i < totalLength; i += 10) {
-          // Get point on the path
-          const point = path.getPointAtLength(i);
-          
-          // Keep points within the visible container area
-          // Adjust bounds based on container and narwhal size
-          const containerRect = bubbleContainer.getBoundingClientRect();
-          const narwhalWidth = narwhal.clientWidth;
-          const narwhalHeight = narwhal.clientHeight;
-          
-          const maxX = containerRect.width - narwhalWidth/2;
-          const maxY = containerRect.height - narwhalHeight/2;
-          const minX = narwhalWidth/2;
-          const minY = narwhalHeight/2;
-          
-          // Constrain each point (this doesn't actually modify the path,
-          // but helps us understand if we need to scale)
-          if (point.x > maxX || point.x < minX || point.y > maxY || point.y < minY) {
-            console.log("Point outside bounds:", point.x, point.y);
-          }
-        }
-        
-        // Adjust animation speed for mobile
-        angleSmoothing = 0.3; // More responsive turning
-      }
-    }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
