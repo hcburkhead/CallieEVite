@@ -79,6 +79,7 @@
       left: 0;
       pointer-events: none;
       z-index: 1;
+      visibility: hidden; /* Hide the debug path */
     }
     
     /* Narwhal container */
@@ -516,8 +517,7 @@
         margin-top: 15px;
         font-size: 24px;
       }
-    /* Adjust SVG path for better visibility on mobile */
-    @media (max-width: 768px) {
+      
       svg.debug-path {
         transform: scale(0.8);
         transform-origin: center;
@@ -587,8 +587,6 @@
   <div class="page-wrapper">
     <!-- Main RSVP button -->
     <button id="openRsvpBtn">RSVP Now</button>
-    
-
     
     <h1>You're Invited!</h1>
     <div class="event-details">
@@ -774,7 +772,8 @@
 
     // Debug function - logs to console only
     function logDebug(message) {
-      console.log(message);
+      // Uncomment for debugging
+      // console.log(message);
     }
     
     // ==========================================================================
@@ -795,6 +794,17 @@
      */
     function getAngleDifference(a, b) {
       return normalizeAngle(b - a);
+    }
+    
+    /**
+     * Adjust the SVG path and animation for mobile screens
+     */
+    function adjustPathForMobile() {
+      // If it's a mobile device
+      if (window.innerWidth <= 768) {
+        // Adjust animation speed for mobile
+        angleSmoothing = 0.3; // More responsive turning
+      }
     }
     
     /**
@@ -1523,28 +1533,30 @@
     // Open RSVP form when the button is clicked
     openRsvpBtn.addEventListener("click", openRsvpModal);
     
-    // Adjust container height on small screens for better visualization
+    // Adjust for mobile devices
     function adjustForMobile() {
-      // Check if it's a mobile device (roughly)
+      // Check if it's a mobile device
       if (window.innerWidth <= 768) {
-        // Adapt animation speed for smaller screens
-        angleSmoothing = 0.3; // More responsive turns for mobile
-        
         // Adjust narwhal size dynamically based on container width
         const containerWidth = bubbleContainer.clientWidth;
-        const narwhalSize = Math.min(150, Math.max(100, containerWidth * 0.25));
+        const narwhalSize = Math.min(120, Math.max(80, containerWidth * 0.2));
         narwhal.style.width = narwhalSize + 'px';
         
-        // Make sure the narwhal stays more visible in the center area
-        const lookAheadDistance = 15; // Smaller look-ahead distance on mobile
+        // Adjust animation parameters
+        angleSmoothing = 0.3; // More responsive turns on mobile
+        
+        // Modify the path scale for better visibility
+        adjustPathForMobile();
+      } else {
+        // Reset to desktop settings
+        narwhal.style.width = '200px';
+        angleSmoothing = 0.2;
       }
     }
     
     // Run mobile adjustments on load and resize
     window.addEventListener('resize', adjustForMobile);
     
-
-
     // Attach close event to the modal's close button
     document.getElementById("closeModal").addEventListener("click", closeModal);
     
