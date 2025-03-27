@@ -1,4 +1,37 @@
-<!DOCTYPE html>
+/**
+     * Adjust the SVG path and animation for mobile screens
+     */
+    function adjustPathForMobile() {
+      // If it's a mobile device
+      if (window.innerWidth <= 768) {
+        // Scale down the path for mobile
+        const totalLength = path.getTotalLength();
+        for (let i = 0; i < totalLength; i += 10) {
+          // Get point on the path
+          const point = path.getPointAtLength(i);
+          
+          // Keep points within the visible container area
+          // Adjust bounds based on container and narwhal size
+          const containerRect = bubbleContainer.getBoundingClientRect();
+          const narwhalWidth = narwhal.clientWidth;
+          const narwhalHeight = narwhal.clientHeight;
+          
+          const maxX = containerRect.width - narwhalWidth/2;
+          const maxY = containerRect.height - narwhalHeight/2;
+          const minX = narwhalWidth/2;
+          const minY = narwhalHeight/2;
+          
+          // Constrain each point (this doesn't actually modify the path,
+          // but helps us understand if we need to scale)
+          if (point.x > maxX || point.x < minX || point.y > maxY || point.y < minY) {
+            console.log("Point outside bounds:", point.x, point.y);
+          }
+        }
+        
+        // Adjust animation speed for mobile
+        angleSmoothing = 0.3; // More responsive turning
+      }
+    }<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -494,7 +527,9 @@
       
       .container {
         width: 98%;
-        height: 40vh;
+        height: 300px; /* Fixed height instead of viewport percentage */
+        min-height: 250px;
+        max-height: 350px;
       }
       
       #openRsvpBtn {
@@ -514,9 +549,15 @@
         margin-top: 15px;
         font-size: 24px;
       }
+    /* Adjust SVG path for better visibility on mobile */
+    @media (max-width: 768px) {
+      svg.debug-path {
+        transform: scale(0.8);
+        transform-origin: center;
+      }
       
       .narwhal-container {
-        width: 150px; /* Smaller on mobile but still visible */
+        width: 120px; /* Smaller on mobile but still visible */
       }
     }
     
@@ -548,7 +589,7 @@
     /* Extra small devices */
     @media (max-width: 480px) {
       .container {
-        height: 35vh;
+        height: 250px;
       }
       
       .narwhal-container {
@@ -805,7 +846,11 @@
 
       // Calculate progression along path
       const totalLength = path.getTotalLength();
-      const speed = 0.000035; // Adjusted for better speed with smoothing
+      
+      // Adjust speed based on screen size
+      const speedMultiplier = window.innerWidth <= 768 ? 1.5 : 1.0;
+      const speed = 0.000035 * speedMultiplier; // Faster on mobile
+      
       currentT += (forward ? 1 : -1) * delta * speed;
 
       // Reverse direction at the ends
@@ -822,7 +867,7 @@
       
       // Calculate the ideal angle by looking ahead on the path
       // Look further ahead for larger narwhal
-      const lookAheadDistance = 25;
+      const lookAheadDistance = window.innerWidth <= 768 ? 15 : 25;
       const lookAheadT = Math.min(totalLength, totalLength * currentT + lookAheadDistance);
       const ahead = path.getPointAtLength(lookAheadT);
       const angle = Math.atan2(ahead.y - pos.y, ahead.x - pos.x);
@@ -846,9 +891,23 @@
       // Calculate smoothed angle
       prevAngle = normalizeAngle(prevAngle + angleDiff * currentSmoothing);
       
+      // Make sure position is within the container boundaries
+      const containerRect = bubbleContainer.getBoundingClientRect();
+      const narwhalSize = narwhal.clientWidth;
+      
+      let posX = pos.x;
+      let posY = pos.y;
+      
+      // Constrain position to stay within container with padding
+      const padding = narwhalSize * 0.5;
+      
+      // Keep narwhal within bounds
+      posX = Math.max(padding, Math.min(containerRect.width - padding, posX));
+      posY = Math.max(padding, Math.min(containerRect.height - padding, posY));
+      
       // Apply position from exact path coordinates - no smoothing on position
-      narwhal.style.left = `${pos.x}px`;
-      narwhal.style.top = `${pos.y}px`;
+      narwhal.style.left = `${posX}px`;
+      narwhal.style.top = `${posY}px`;
       
       // Apply smoothed rotation
       narwhal.style.transform = `translate(-50%, -50%) rotate(${prevAngle}rad) scaleX(${forward ? 1 : -1})`;
@@ -1629,6 +1688,9 @@
     // When the page loads, initialize everything
     window.onload = function() {
       logDebug("Application initializing...");
+      
+      // Make sure we adjust for mobile before starting animations
+      adjustForMobile();
       
       // Start the SVG path animation
       requestAnimationFrame(animate);
