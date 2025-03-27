@@ -494,15 +494,29 @@
       
       .container {
         width: 98%;
-        height: 65vh;
+        height: 55vh;
       }
       
       #openRsvpBtn {
-        position: relative;
+        position: fixed;
         top: auto;
-        right: auto;
-        margin: 10px auto;
+        bottom: 20px;
+        right: 20px;
+        margin: 0;
         display: block;
+        z-index: 200;
+        padding: 12px 24px;
+        font-size: 18px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+      
+      h1 {
+        margin-top: 15px;
+        font-size: 24px;
+      }
+      
+      .narwhal-container {
+        width: 150px; /* Smaller on mobile but still visible */
       }
     }
     
@@ -516,6 +530,48 @@
         flex-direction: column;
         gap: 5px;
       }
+      
+      .event-details h2 {
+        font-size: 20px;
+      }
+      
+      .bubble {
+        width: 80px !important;
+        height: 80px !important;
+      }
+      
+      .bubble-text {
+        font-size: 12px;
+      }
+    }
+    
+    /* Extra small devices */
+    @media (max-width: 480px) {
+      .container {
+        height: 50vh;
+      }
+      
+      .narwhal-container {
+        width: 120px;
+      }
+      
+      .event-details-panel h3 {
+        font-size: 14px;
+        padding: 8px 10px;
+      }
+      
+      .event-essential-info {
+        padding: 8px;
+        font-size: 14px;
+      }
+      
+      .event-title {
+        font-size: 16px;
+      }
+      
+      .icon {
+        min-width: 14px;
+      }
     }
   </style>
 </head>
@@ -523,6 +579,45 @@
   <div class="page-wrapper">
     <!-- Main RSVP button -->
     <button id="openRsvpBtn">RSVP Now</button>
+    
+    <!-- Mobile Floating RSVP indicator for very small screens -->
+    <style>
+      @media (max-width: 480px) {
+        #mobileRsvpIndicator {
+          display: block;
+        }
+      }
+      @media (min-width: 481px) {
+        #mobileRsvpIndicator {
+          display: none;
+        }
+      }
+      #mobileRsvpIndicator {
+        position: fixed;
+        bottom: 75px;
+        right: 20px;
+        background-color: rgba(103, 200, 255, 0.2);
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 150;
+        animation: pulse 2s infinite;
+        pointer-events: none;
+      }
+      @keyframes pulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(103, 200, 255, 0.4); }
+        70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(103, 200, 255, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(103, 200, 255, 0); }
+      }
+    </style>
+    <div id="mobileRsvpIndicator">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#67c8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 19V5M5 12l7-7 7 7"/>
+      </svg>
+    </div>
     
     <h1>You're Invited!</h1>
     <div class="event-details">
@@ -683,6 +778,7 @@
     const dietaryGroup = document.getElementById("dietaryGroup");
     const guestsInput = document.getElementById("guestsInput");
     const guestNamesSection = document.getElementById("guestNamesSection");
+    const mobileRsvpIndicator = document.getElementById("mobileRsvpIndicator");
     
     // Event details elements
     const eventTitleHeader = document.getElementById("event-title-header");
@@ -1438,6 +1534,35 @@
     
     // Open RSVP form when the button is clicked
     openRsvpBtn.addEventListener("click", openRsvpModal);
+    
+    // Adjust container height on small screens for better visualization
+    function adjustForMobile() {
+      // Check if it's a mobile device (roughly)
+      if (window.innerWidth <= 768) {
+        // Adapt animation speed for smaller screens
+        angleSmoothing = 0.3; // More responsive turns for mobile
+        
+        // Adjust narwhal size dynamically based on container width
+        const containerWidth = bubbleContainer.clientWidth;
+        const narwhalSize = Math.min(150, Math.max(100, containerWidth * 0.25));
+        narwhal.style.width = narwhalSize + 'px';
+        
+        // Make sure the narwhal stays more visible in the center area
+        const lookAheadDistance = 15; // Smaller look-ahead distance on mobile
+      }
+    }
+    
+    // Run mobile adjustments on load and resize
+    window.addEventListener('resize', adjustForMobile);
+    
+    // For visibility on mobile, handle scroll to keep bubbles visible
+    window.addEventListener('scroll', function() {
+      if (window.innerWidth <= 480 && window.scrollY > 100) {
+        if (mobileRsvpIndicator) mobileRsvpIndicator.style.opacity = '1';
+      } else {
+        if (mobileRsvpIndicator) mobileRsvpIndicator.style.opacity = '0.7';
+      }
+    });
 
     // Attach close event to the modal's close button
     document.getElementById("closeModal").addEventListener("click", closeModal);
@@ -1562,6 +1687,9 @@
       
       // Setup event details toggle
       setupEventDetailsToggle();
+      
+      // Apply mobile-specific adjustments
+      adjustForMobile();
       
       // Add empty decoration bubbles
       for (let i = 0; i < 8; i++) {
