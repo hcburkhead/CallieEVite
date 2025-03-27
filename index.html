@@ -1,4 +1,37 @@
-<!DOCTYPE html>
+/**
+     * Animate the narwhal along the SVG path
+     */
+    function animate(timestamp) {
+      if (!lastTime) {
+        lastTime = timestamp;
+        requestAnimationFrame(animate);
+        return;
+      }
+      
+      // Calculate time delta for consistent animation speed
+      const delta = timestamp - lastTime;
+      lastTime = timestamp;
+
+      // Calculate progression along path
+      const totalLength = path.getTotalLength();
+      
+      // Speed consistent across devices
+      const speed = 0.000035;
+      currentT += (forward ? 1 : -1) * delta * speed;
+
+      // Reverse direction at the ends
+      if (currentT >= 1) {
+        currentT = 1;
+        forward = false;
+      } else if (currentT <= 0) {
+        currentT = 0;
+        forward = true;
+      }
+
+      // Get position on path 
+      const pos = path.getPointAtLength(totalLength * currentT);
+      
+      // Calculate look-ahead for <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -549,11 +582,11 @@
     /* Extra small devices */
     @media (max-width: 480px) {
       .container {
-        height: 220px;
+        height: 180px; /* Even smaller container height */
       }
       
       .narwhal-container {
-        width: 50px; /* Even smaller on very small screens */
+        width: 40px; /* Tiny narwhal for small screens */
       }
       
       .event-details-panel h3 {
@@ -575,8 +608,12 @@
       }
       
       .bubble {
-        width: 60px !important; /* Smaller bubbles on mobile */
-        height: 60px !important;
+        width: 50px !important; /* Even smaller bubbles on mobile */
+        height: 50px !important;
+      }
+      
+      .bubble-text {
+        font-size: 10px; /* Smaller text in bubbles */
       }
     }
   </style>
@@ -856,9 +893,38 @@
       const angleDiff = getAngleDifference(prevAngle, angle);
       prevAngle = normalizeAngle(prevAngle + angleDiff * angleSmoothing);
       
-      // Apply position directly
-      narwhal.style.left = `${pos.x}px`;
-      narwhal.style.top = `${pos.y}px`;
+      // Make sure the narwhal stays within container bounds
+      let posX = pos.x;
+      let posY = pos.y;
+      
+      // On very small screens, scale the coordinates to container size
+      if (window.innerWidth <= 480) {
+        const containerRect = bubbleContainer.getBoundingClientRect();
+        
+        // Scale the coordinates to fit within 80% of the container
+        const scaleX = (containerRect.width * 0.8) / 1185;
+        const scaleY = (containerRect.height * 0.8) / 550;
+        const scale = Math.min(scaleX, scaleY);
+        
+        // Center the path in container
+        const centerX = containerRect.width * 0.5;
+        const centerY = containerRect.height * 0.5;
+        
+        // Apply scale and center offset
+        posX = (pos.x * scale) + centerX - ((1185 * scale) / 2);
+        posY = (pos.y * scale) + centerY - ((550 * scale) / 2);
+        
+        // Ensure narwhal stays fully visible by limiting its position
+        const narwhalSize = narwhal.clientWidth;
+        const padding = narwhalSize / 2;
+        
+        posX = Math.max(padding, Math.min(containerRect.width - padding, posX));
+        posY = Math.max(padding, Math.min(containerRect.height - padding, posY));
+      }
+      
+      // Apply position
+      narwhal.style.left = `${posX}px`;
+      narwhal.style.top = `${posY}px`;
       
       // Apply rotation
       narwhal.style.transform = `translate(-50%, -50%) rotate(${prevAngle}rad) scaleX(${forward ? 1 : -1})`;
