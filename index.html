@@ -115,38 +115,7 @@
     #openRsvpBtn:hover {
       background-color: #4da8db;
     }
-
-    /* Debug panel 
-    #debugPanel {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      z-index: 1000;
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 10px;
-      font-size: 12px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      max-width: 300px;
-      display: hidden;
-    }
-
-    #debugToggle {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      z-index: 1001;
-      background: #67c8ff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 5px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      display: hidden;
-    }
-    */
+    
     /* Bubbles */
     .bubble {
       position: absolute;
@@ -684,14 +653,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Debug Panel 
-  <button id="debugToggle">Debug</button>
-  <div id="debugPanel">
-    <h4>Debug Info</h4>
-    <div id="debugContent"></div>
-  </div>
-  -->
   
   <script>
     // ==========================================================================
@@ -722,9 +683,6 @@
     const dietaryGroup = document.getElementById("dietaryGroup");
     const guestsInput = document.getElementById("guestsInput");
     const guestNamesSection = document.getElementById("guestNamesSection");
-   // const debugPanel = document.getElementById("debugPanel");
-   // const debugToggle = document.getElementById("debugToggle");
-   // const debugContent = document.getElementById("debugContent");
     
     // Event details elements
     const eventTitleHeader = document.getElementById("event-title-header");
@@ -748,25 +706,10 @@
     let bubbleCounter = 0;
     let autoBubbleInterval = null;
 
-    // Debug functions
+    // Debug function - logs to console only
     function logDebug(message) {
-     console.log(message);
+      console.log(message);
     }
-      
-      // Also add to debug panel
-    //  const timestamp = new Date().toLocaleTimeString();
-    //  const logEntry = document.createElement('div');
-    //  logEntry.innerHTML = `<small>${timestamp}</small>: ${message}`;
-   //   debugContent.appendChild(logEntry);
-      
-      // Scroll to bottom of debug panel
-   //   debugContent.scrollTop = debugContent.scrollHeight;
-  //  }
-    
-    // Toggle debug panel
-   // debugToggle.addEventListener('click', function() {
-     // debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
-    //});
     
     // ==========================================================================
     // ANIMATION FUNCTIONS
@@ -1599,44 +1542,6 @@
       });
     });
     
-    // ==========================================================================
-    // TEST FUNCTIONALITY
-    // ==========================================================================
-    
-    /**
-     * Test API connection directly
-     */
-    function testApiConnection() {
-      logDebug("Testing API connection to: " + SCRIPT_URL);
-      
-      fetch(`${SCRIPT_URL}?action=getEventDetails`)
-        .then(response => {
-          const status = response.status;
-          const statusText = response.statusText;
-          
-          logDebug(`API Test Result: ${status} ${statusText}`);
-          
-          if (response.ok) {
-            response.json().then(data => {
-              logDebug("Data received successfully: " + JSON.stringify(data).substring(0, 100) + "...");
-            });
-          } else {
-            logDebug("API request failed");
-          }
-        })
-        .catch(error => {
-          logDebug("API test error: " + error.message);
-        });
-    }
-    
-    /* Add test button to debug panel
-    const testApiButton = document.createElement('button');
-    testApiButton.textContent = "Test API Connection";
-    testApiButton.style.marginTop = "10px";
-    testApiButton.style.padding = "5px";
-    testApiButton.onclick = testApiConnection;
-    debugPanel.appendChild(testApiButton);
-    */
     // ==========================================================================
     // INITIALIZATION
     // ==========================================================================
