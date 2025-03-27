@@ -116,7 +116,7 @@
       background-color: #4da8db;
     }
 
-    /* Debug panel */
+    /* Debug panel 
     #debugPanel {
       position: fixed;
       bottom: 10px;
@@ -146,7 +146,7 @@
       cursor: pointer;
       display: hidden;
     }
-    
+    */
     /* Bubbles */
     .bubble {
       position: absolute;
@@ -685,12 +685,13 @@
     </div>
   </div>
 
-  <!-- Debug Panel -->
+  <!-- Debug Panel 
   <button id="debugToggle">Debug</button>
   <div id="debugPanel">
     <h4>Debug Info</h4>
     <div id="debugContent"></div>
   </div>
+  -->
   
   <script>
     // ==========================================================================
@@ -721,9 +722,9 @@
     const dietaryGroup = document.getElementById("dietaryGroup");
     const guestsInput = document.getElementById("guestsInput");
     const guestNamesSection = document.getElementById("guestNamesSection");
-    const debugPanel = document.getElementById("debugPanel");
-    const debugToggle = document.getElementById("debugToggle");
-    const debugContent = document.getElementById("debugContent");
+   // const debugPanel = document.getElementById("debugPanel");
+   // const debugToggle = document.getElementById("debugToggle");
+   // const debugContent = document.getElementById("debugContent");
     
     // Event details elements
     const eventTitleHeader = document.getElementById("event-title-header");
@@ -749,22 +750,22 @@
 
     // Debug functions
     function logDebug(message) {
-      console.log(message);
+     console.log(message);
       
       // Also add to debug panel
-      const timestamp = new Date().toLocaleTimeString();
-      const logEntry = document.createElement('div');
-      logEntry.innerHTML = `<small>${timestamp}</small>: ${message}`;
-      debugContent.appendChild(logEntry);
+    //  const timestamp = new Date().toLocaleTimeString();
+    //  const logEntry = document.createElement('div');
+    //  logEntry.innerHTML = `<small>${timestamp}</small>: ${message}`;
+   //   debugContent.appendChild(logEntry);
       
       // Scroll to bottom of debug panel
-      debugContent.scrollTop = debugContent.scrollHeight;
-    }
+   //   debugContent.scrollTop = debugContent.scrollHeight;
+  //  }
     
     // Toggle debug panel
-    debugToggle.addEventListener('click', function() {
-      debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
-    });
+   // debugToggle.addEventListener('click', function() {
+     // debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
+    //});
     
     // ==========================================================================
     // ANIMATION FUNCTIONS
@@ -1627,14 +1628,14 @@
         });
     }
     
-    // Add test button to debug panel
+    /* Add test button to debug panel
     const testApiButton = document.createElement('button');
     testApiButton.textContent = "Test API Connection";
     testApiButton.style.marginTop = "10px";
     testApiButton.style.padding = "5px";
     testApiButton.onclick = testApiConnection;
     debugPanel.appendChild(testApiButton);
-    
+    */
     // ==========================================================================
     // INITIALIZATION
     // ==========================================================================
