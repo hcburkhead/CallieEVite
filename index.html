@@ -82,6 +82,12 @@
       visibility: hidden; /* Hide the debug path */
     }
     
+    /* Scale the motion path to fit the viewport */
+    #motionPath {
+      transform-origin: center;
+      vector-effect: non-scaling-stroke;
+    }
+    
     /* Narwhal container */
     .narwhal-container {
       position: absolute;
@@ -518,9 +524,10 @@
         font-size: 24px;
       }
       
+      /* Don't scale the SVG path to ensure narwhal follows the correct path */
       svg.debug-path {
-        transform: scale(0.8);
-        transform-origin: center;
+        width: 100%;
+        height: 100%;
       }
       
       .narwhal-container {
@@ -804,6 +811,29 @@
       if (window.innerWidth <= 768) {
         // Adjust animation speed for mobile
         angleSmoothing = 0.3; // More responsive turning
+        
+        // Scale the SVG path to fit the mobile container
+        const pathElement = document.getElementById("motionPath");
+        if (pathElement) {
+          // Calculate scale based on container versus original SVG coords
+          // The original coordinates go up to about 1185px wide and 550px high
+          const containerWidth = bubbleContainer.clientWidth;
+          const containerHeight = bubbleContainer.clientHeight;
+          
+          // Calculate scaling factor to fit the path within the container
+          const scaleX = containerWidth / 1185;
+          const scaleY = containerHeight / 550;
+          const scale = Math.min(scaleX, scaleY) * 0.95; // Scale to 95% of container to add margin
+          
+          // Apply the scale transform to the path
+          pathElement.setAttribute('transform', `scale(${scale})`);
+        }
+      } else {
+        // Reset to desktop scale
+        const pathElement = document.getElementById("motionPath");
+        if (pathElement) {
+          pathElement.setAttribute('transform', 'scale(1)');
+        }
       }
     }
     
@@ -824,9 +854,9 @@
       // Calculate progression along path
       const totalLength = path.getTotalLength();
       
-      // Adjust speed based on screen size
-      const speedMultiplier = window.innerWidth <= 768 ? 1.5 : 1.0;
-      const speed = 0.000035 * speedMultiplier; // Faster on mobile
+      // Adjust speed based on screen size - slower on mobile to compensate for smaller path
+      const speedMultiplier = window.innerWidth <= 768 ? 0.8 : 1.0;
+      const speed = 0.000035 * speedMultiplier;
       
       currentT += (forward ? 1 : -1) * delta * speed;
 
@@ -839,14 +869,16 @@
         forward = true;
       }
 
-      // Get exact position on path
-      const pos = path.getPointAtLength(totalLength * currentT);
+      // Get exact position on path - this will now be scaled correctly
+      const pathPoint = currentT * totalLength;
+      const pos = path.getPointAtLength(pathPoint);
       
       // Calculate the ideal angle by looking ahead on the path
-      // Look further ahead for larger narwhal
-      const lookAheadDistance = window.innerWidth <= 768 ? 15 : 25;
-      const lookAheadT = Math.min(totalLength, totalLength * currentT + lookAheadDistance);
-      const ahead = path.getPointAtLength(lookAheadT);
+      const lookAheadDistance = 25 * (window.innerWidth <= 768 ? 0.5 : 1); // Smaller on mobile
+      const lookAheadPoint = Math.min(totalLength, pathPoint + lookAheadDistance);
+      const ahead = path.getPointAtLength(lookAheadPoint);
+      
+      // Calculate angle for rotation
       const angle = Math.atan2(ahead.y - pos.y, ahead.x - pos.x);
       
       // Initialize prevAngle if this is the first frame
@@ -855,36 +887,13 @@
       }
       
       // Smooth the angle to avoid jittery rotation
-      // Use the shortest angle distance for interpolation
       const angleDiff = getAngleDifference(prevAngle, angle);
-      
-      // Adaptive smoothing - less smoothing for sharp turns
-      let currentSmoothing = angleSmoothing;
-      if (Math.abs(angleDiff) > 0.3) {
-        // Increase responsiveness for sharper turns
-        currentSmoothing = Math.min(0.4, angleSmoothing * 2);
-      }
-      
-      // Calculate smoothed angle
+      const currentSmoothing = angleSmoothing;
       prevAngle = normalizeAngle(prevAngle + angleDiff * currentSmoothing);
       
-      // Make sure position is within the container boundaries
-      const containerRect = bubbleContainer.getBoundingClientRect();
-      const narwhalSize = narwhal.clientWidth;
-      
-      let posX = pos.x;
-      let posY = pos.y;
-      
-      // Constrain position to stay within container with padding
-      const padding = narwhalSize * 0.5;
-      
-      // Keep narwhal within bounds
-      posX = Math.max(padding, Math.min(containerRect.width - padding, posX));
-      posY = Math.max(padding, Math.min(containerRect.height - padding, posY));
-      
-      // Apply position from exact path coordinates - no smoothing on position
-      narwhal.style.left = `${posX}px`;
-      narwhal.style.top = `${posY}px`;
+      // Apply position - with the path now scaled, positions should be in view
+      narwhal.style.left = `${pos.x}px`;
+      narwhal.style.top = `${pos.y}px`;
       
       // Apply smoothed rotation
       narwhal.style.transform = `translate(-50%, -50%) rotate(${prevAngle}rad) scaleX(${forward ? 1 : -1})`;
@@ -1534,23 +1543,35 @@
     openRsvpBtn.addEventListener("click", openRsvpModal);
     
     // Adjust for mobile devices
+    /**
+     * Make necessary adjustments for mobile view
+     */
     function adjustForMobile() {
+      // Get container dimensions
+      const containerWidth = bubbleContainer.clientWidth;
+      const containerHeight = bubbleContainer.clientHeight;
+      
       // Check if it's a mobile device
       if (window.innerWidth <= 768) {
         // Adjust narwhal size dynamically based on container width
-        const containerWidth = bubbleContainer.clientWidth;
-        const narwhalSize = Math.min(120, Math.max(80, containerWidth * 0.2));
+        const narwhalSize = Math.min(120, Math.max(80, containerWidth * 0.1));
         narwhal.style.width = narwhalSize + 'px';
         
         // Adjust animation parameters
-        angleSmoothing = 0.3; // More responsive turns on mobile
+        angleSmoothing = 0.4; // More responsive turns on mobile
         
-        // Modify the path scale for better visibility
+        // Apply path scaling for mobile
         adjustPathForMobile();
+        
+        // Logging for debugging (usually disabled)
+        // console.log(`Mobile view: Container size ${containerWidth}x${containerHeight}, Narwhal size: ${narwhalSize}px`);
       } else {
         // Reset to desktop settings
         narwhal.style.width = '200px';
         angleSmoothing = 0.2;
+        
+        // Reset path scaling for desktop
+        adjustPathForMobile();
       }
     }
     
