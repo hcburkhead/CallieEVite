@@ -1,37 +1,4 @@
-/**
-     * Animate the narwhal along the SVG path
-     */
-    function animate(timestamp) {
-      if (!lastTime) {
-        lastTime = timestamp;
-        requestAnimationFrame(animate);
-        return;
-      }
-      
-      // Calculate time delta for consistent animation speed
-      const delta = timestamp - lastTime;
-      lastTime = timestamp;
-
-      // Calculate progression along path
-      const totalLength = path.getTotalLength();
-      
-      // Speed consistent across devices
-      const speed = 0.000035;
-      currentT += (forward ? 1 : -1) * delta * speed;
-
-      // Reverse direction at the ends
-      if (currentT >= 1) {
-        currentT = 1;
-        forward = false;
-      } else if (currentT <= 0) {
-        currentT = 0;
-        forward = true;
-      }
-
-      // Get position on path 
-      const pos = path.getPointAtLength(totalLength * currentT);
-      
-      // Calculate look-ahead for <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -893,11 +860,10 @@
       const angleDiff = getAngleDifference(prevAngle, angle);
       prevAngle = normalizeAngle(prevAngle + angleDiff * angleSmoothing);
       
-      // Make sure the narwhal stays within container bounds
       let posX = pos.x;
       let posY = pos.y;
       
-      // On very small screens, scale the coordinates to container size
+      // Only apply scaling for mobile devices
       if (window.innerWidth <= 480) {
         const containerRect = bubbleContainer.getBoundingClientRect();
         
@@ -920,7 +886,30 @@
         
         posX = Math.max(padding, Math.min(containerRect.width - padding, posX));
         posY = Math.max(padding, Math.min(containerRect.height - padding, posY));
+      } else if (window.innerWidth <= 768) {
+        // Medium sized mobile devices
+        const containerRect = bubbleContainer.getBoundingClientRect();
+        
+        // Apply less aggressive scaling
+        const scaleX = (containerRect.width * 0.9) / 1185;
+        const scaleY = (containerRect.height * 0.9) / 550;
+        const scale = Math.min(scaleX, scaleY);
+        
+        // Center
+        const centerX = containerRect.width * 0.5;
+        const centerY = containerRect.height * 0.5;
+        
+        posX = (pos.x * scale) + centerX - ((1185 * scale) / 2);
+        posY = (pos.y * scale) + centerY - ((550 * scale) / 2);
+        
+        // Light constraints
+        const narwhalSize = narwhal.clientWidth;
+        const padding = narwhalSize / 2;
+        
+        posX = Math.max(padding, Math.min(containerRect.width - padding, posX));
+        posY = Math.max(padding, Math.min(containerRect.height - padding, posY));
       }
+      // For desktop, use the original position values
       
       // Apply position
       narwhal.style.left = `${posX}px`;
