@@ -1,1746 +1,621 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Narwhal RSVP Evite</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Callie's Duck Pond Party</title>
+
   <style>
-    /* Basic styling */
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      overflow-x: hidden;
-      margin: 0;
-      padding: 0;
-      background-color: #f9f9f9;
+    :root {
+      --ui-green: #2c5f2d;
+      --panel-blue: #0288d1;
+      --btn-orange: #ff9800;
+      --shadow: rgba(0,0,0,0.18);
+      --wood-pattern: url('https://i.imgur.com/wLF80aZ.png');
     }
-    
-    /* Page wrapper */
-    .page-wrapper {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 15px;
-      box-sizing: border-box;
-      position: relative;
+
+    body { 
+      margin:0; font-family: 'Segoe UI', sans-serif; background:#bfe9ff; text-align:center; overflow-x:hidden; 
+      display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh;
     }
-    
-    /* Headers */
-    h1 {
-      margin-top: 20px;
-      color: #333;
-      position: relative;
-      z-index: 10;
-      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
-    }
-    
-    /* Event details section */
-    .event-details {
-      color: #333;
-      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
-      margin-bottom: 15px;
-      position: relative;
-      z-index: 10;
-    }
-    
-    /* Main container */
+    h1 { margin: 0 0 14px; color: var(--ui-green); text-shadow: 1px 1px 2px rgba(255,255,255,0.8); }
+    .page-wrapper { width: 100%; max-width: 1200px; padding: 0 14px 20px; box-sizing: border-box; }
+
+    /* Event Panel Styles */
+    .event-details-panel { width: 95%; max-width: 640px; margin: 0 auto 16px; background: white; border-radius: 10px; box-shadow: 0 4px 8px var(--shadow); overflow: hidden; z-index: 40; position: relative; }
+    .event-details-panel h3 { background: var(--panel-blue); color: white; margin:0; padding: 10px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; }
+    .event-details-content { padding: 14px 16px; display:none; text-align:left; line-height: 1.5; font-size: 0.95rem; }
+    .event-details-content.show { display:block; }
+    .event-details-content h2 { margin-top: 0; color: var(--ui-green); font-size: 1.3rem; margin-bottom: 8px;}
+    .event-details-content p { margin: 8px 0; }
+    #event-location-details { font-size: 0.9em; color: #444; background: #f0f8ff; padding: 8px; border-radius: 6px; }
+
     .container {
-      position: relative;
-      width: 95%;
-      height: 75vh;
-      margin: 0 auto 20px;
-      background-image: url('https://i.imgur.com/4pCJnLn.jpeg');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      border-radius: 15px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
+      position: relative; width: 100%; max-width: 1200px; aspect-ratio: 1200 / 700; height: auto;
+      margin: 0 auto; border-radius: 14px; border: 4px solid #fff;
+      box-shadow: 0 8px 18px var(--shadow); overflow: hidden;
+      background: #bfe9ff;
+    }
+
+    #sceneCamera {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      background: url("https://i.imgur.com/gTPIqeZ.png") center/cover;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    svg#sceneSvg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index: 2; }
+
+    #lemonadeStand { position:absolute; left: 2.2%; bottom: 3%; width: 30%; z-index: 6; }
+    #lsDuck { position:absolute; left: 8.6%; bottom: 30%; width: 10%; z-index: 5; transform-origin: 50% 80%; animation: lsWiggle 1.8s ease-in-out infinite; }
+    #standClickZone { position:absolute; left: 2.2%; bottom: 10%; width: 30%; height: 30%; z-index: 20; cursor: pointer; }
+
+    @keyframes lsWiggle { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+
+    .duckling { 
+      position:absolute; width: 70px; height: 70px; z-index: 8; pointer-events: auto; 
     }
     
-    /* Semi-transparent overlay */
-    .container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(255, 255, 255, 0.2);
-      z-index: 1;
+    .duck-float-wrap { 
+      position: absolute; inset: -20px; 
+      animation: subtleFloat 3.5s ease-in-out infinite; 
     }
     
-    /* SVG path styling */
-    svg.debug-path {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
+    .duckling img { 
+      position: absolute; top: 20px; left: 20px;
+      width: calc(100% - 40px); height: calc(100% - 40px); 
+      display: block; 
+    }
+    .duckling.floating img { clip-path: inset(0 0 22% 0); }
+    
+    .duckling.callie-vip .duck-float-wrap {
+      -webkit-filter: drop-shadow(0 0 6px rgba(255, 105, 180, 0.9)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
+      filter: drop-shadow(0 0 6px rgba(255, 105, 180, 0.9)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
+    }
+
+    .duck-open { opacity: 0; }
+
+    .duckling-name { 
+      position:absolute; top:-4px; left:50%; 
+      background: white; padding: 2px 6px; border-radius: 4px; 
+      font-size: 10px; font-weight: 700; opacity: 0; 
+      transition: opacity 0.2s; 
+      white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
       pointer-events: none;
-      z-index: 1;
-      /* Make path visible but subtle */
+      transform: translateX(-50%);
     }
+    .duckling:hover .duckling-name { opacity: 1; }
     
-    /* Narwhal container */
-    .narwhal-container {
-      position: absolute;
-      width: 200px;
-      transform: translate(-50%, -50%);
-      z-index: 10;
-    }
+    @keyframes subtleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
     
-    .narwhal-container img {
-      width: 100%;
-      height: auto;
-    }
-    
-    /* RSVP button */
-    #openRsvpBtn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      background-color: #67c8ff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: bold;
-      z-index: 100;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      transition: background-color 0.3s;
-    }
-    
-    #openRsvpBtn:hover {
-      background-color: #4da8db;
-    }
-    
-    /* Bubbles */
     .bubble {
       position: absolute;
-      width: 100px;
-      height: 100px;
-      background-image: url('https://i.imgur.com/wYQf7YY.png');
-      background-size: contain;
-      background-position: center;
-      background-repeat: no-repeat;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.3s, opacity 0.3s;
-      z-index: 5;
-    }
-    
-    .bubble-text {
-      font-weight: bold;
-      color: white;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-      font-size: 14px;
-      max-width: 80%;
-      text-align: center;
-      pointer-events: none;
-    }
-    
-    /* Tiny bubbles */
-    .tiny-bubble {
-      position: absolute;
-      background-color: rgba(255, 255, 255, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.95);
       border-radius: 50%;
       pointer-events: none;
-      z-index: 4;
-      box-shadow: 0 0 2px rgba(255, 255, 255, 0.6), inset 0 0 3px rgba(255, 255, 255, 0.5);
-    }
-    
-    /* Bubble animations */
-    @keyframes tinyBubbleFloatRight {
-      0% { transform: translate(0, 0) scale(0.8); opacity: 0.9; }
-      20% { transform: translate(-5px, -15px) scale(0.9); opacity: 0.8; }
-      100% { transform: translate(-25px, -50px) scale(1.1); opacity: 0; }
-    }
-    
-    @keyframes tinyBubbleFloatLeft {
-      0% { transform: translate(0, 0) scale(0.8); opacity: 0.9; }
-      20% { transform: translate(5px, -15px) scale(0.9); opacity: 0.8; }
-      100% { transform: translate(25px, -50px) scale(1.1); opacity: 0; }
-    }
-    
-    @keyframes float1 {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      15% { transform: translate(15px, -15px) rotate(3deg) scale(1.02); }
-      32% { transform: translate(5px, -45px) rotate(-2deg) scale(1.01); }
-      48% { transform: translate(-10px, -30px) rotate(-4deg) scale(0.98); }
-      65% { transform: translate(-15px, -50px) rotate(2deg) scale(1.03); }
-      82% { transform: translate(-5px, -20px) rotate(1deg) scale(0.99); }
-      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-    }
-    
-    @keyframes float2 {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      18% { transform: translate(-10px, -25px) rotate(-3deg) scale(1.03); }
-      36% { transform: translate(5px, -55px) rotate(2deg) scale(0.99); }
-      54% { transform: translate(15px, -45px) rotate(5deg) scale(1.01); }
-      72% { transform: translate(8px, -35px) rotate(3deg) scale(1.02); }
-      90% { transform: translate(-5px, -15px) rotate(-2deg) scale(0.98); }
-      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-    }
-    
-    @keyframes float3 {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      20% { transform: translate(8px, -30px) rotate(4deg) scale(1.02); }
-      40% { transform: translate(15px, -60px) rotate(1deg) scale(1.01); }
-      60% { transform: translate(-5px, -40px) rotate(-2deg) scale(0.99); }
-      80% { transform: translate(-12px, -25px) rotate(-4deg) scale(0.98); }
-      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-    }
-    
-    @keyframes floatSmall {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      15% { transform: translate(15px, -25px) rotate(5deg) scale(1.03); }
-      30% { transform: translate(22px, -48px) rotate(-3deg) scale(1.01); }
-      45% { transform: translate(5px, -65px) rotate(4deg) scale(1.02); }
-      60% { transform: translate(-8px, -52px) rotate(-8deg) scale(0.99); }
-      80% { transform: translate(-15px, -30px) rotate(-5deg) scale(1.01); }
-      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-    }
-    
-    @keyframes floatLarge {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      15% { transform: translate(5px, -10px) rotate(2deg) scale(1.01); }
-      30% { transform: translate(-3px, -25px) rotate(-1deg) scale(1.02); }
-      50% { transform: translate(-8px, -35px) rotate(-2deg) scale(1); }
-      70% { transform: translate(-4px, -25px) rotate(0deg) scale(1.01); }
-      85% { transform: translate(8px, -15px) rotate(1deg) scale(0.99); }
-      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-    }
-    
-    @keyframes bobUpDown {
-      0% { transform: translateY(0); }
-      50% { transform: translateY(-15px); }
-      100% { transform: translateY(0); }
-    }
-    
-    @keyframes popEffect {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.2); opacity: 0.7; }
-      100% { transform: scale(1); opacity: 0.5; }
-    }
-    
-    .bubble.confirmed {
-      opacity: 0.5;
-      animation: bobUpDown 3s ease-in-out infinite !important;
-    }
-    
-    /* Event details panel */
-    .event-details-panel {
-      position: relative;
-      width: 95%;
-      max-width: 600px;
-      margin: 0 auto 20px;
-      background-color: rgba(255, 255, 255, 0.9);
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      z-index: 50;
-      overflow: hidden;
-      transition: all 0.3s ease;
+      animation: floatBubble 1.5s ease-in forwards;
+      z-index: 10;
     }
 
-    .event-details-panel h3 {
-      background-color: #67c8ff;
-      color: white;
-      margin: 0;
-      padding: 10px 15px;
-      font-size: 16px;
-      cursor: pointer;
-      text-shadow: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .event-header-button {
-      font-size: 12px;
-      background: rgba(255, 255, 255, 0.3);
-      border: none;
-      padding: 2px 8px;
-      border-radius: 3px;
-      cursor: pointer;
+    .spectral-bubble {
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 105, 180, 0.5));
+      border: 1.5px solid rgba(255, 150, 200, 1);
+      box-shadow: 0 0 12px 2px rgba(255, 105, 180, 0.9), inset 0 0 6px rgba(255, 255, 255, 0.8);
     }
 
-    .event-essential-info {
-      padding: 10px;
-      border-bottom: 1px solid #eee;
+    @keyframes floatBubble {
+      0% { transform: translate(0, 0) scale(0.5); opacity: 1; filter: brightness(1.2); }
+      50% { transform: translate(0, -25px) scale(1.2); opacity: 0.9; filter: brightness(1.4); }
+      100% { transform: translate(0, -50px) scale(1.5); opacity: 0; filter: brightness(1); }
     }
 
-    .event-details-content {
-      padding: 15px;
-      max-height: 300px;
-      overflow-y: auto;
-      transition: max-height 0.3s ease, padding 0.3s ease;
+    #lsSpeech { 
+      position: absolute; left: 14%; bottom: 45%; z-index: 9; 
+      padding: 1.5% 2.5%; background: white; border-radius: 14px; 
+      font-weight: 800; font-size: clamp(10px, 1.8vw, 16px);
+      box-shadow: 0 4px 10px var(--shadow); transition: opacity 0.3s; 
     }
+    #lsSpeech.hidden { opacity: 0; pointer-events: none; }
+    #lsSpeech::after { content:""; position:absolute; left: 15%; bottom: -10px; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 10px solid white; }
 
-    .event-details-collapsed .event-details-content {
-      max-height: 0;
-      padding: 0 15px;
-      overflow: hidden;
-      border-top: none;
+    #plankOverlay { 
+      position: fixed; inset: 0; display: none; justify-content: center; align-items: center; 
+      z-index: 2000; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); 
     }
+    #plankOverlay.show { display: flex; }
+    
+    #plankPanel { 
+      width: 92%; max-width: 650px; max-height: 90vh; overflow-y: auto;
+      background-image: var(--wood-pattern); background-size: cover; 
+      border: 5px solid #3e2723; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+    }
+    
+    #plankHeader { 
+      display: flex; justify-content: space-between; align-items: center; 
+      padding: 10px 20px; background: rgba(0,0,0,0.8); color: #fff; font-weight: 900; 
+    }
+    
+    #rsvpForm { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px; text-align: left; }
+    .full { grid-column: 1 / -1; }
+    label { color: white; font-weight: 800; text-shadow: 1px 1px 2px #000; margin-bottom: 2px; display: block; }
+    input, textarea, select { width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #3e2723; box-sizing: border-box; font-size: 16px; }
+    
+    #submitBtn { 
+      background: var(--btn-orange); color: white; font-weight: 900; font-size: 16px; 
+      border: none; padding: 14px; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: filter 0.2s; 
+    }
+    #submitBtn:hover { filter: brightness(1.1); }
 
-    .event-title {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: #4285F4;
-    }
-
-    .event-detail {
-      margin-bottom: 8px;
-      font-size: 14px;
-      line-height: 1.4;
-      text-align: left;
-      text-shadow: none;
-    }
-
-    .event-datetime, .event-location-line {
-      display: flex;
-      align-items: center;
-      margin-bottom: 5px;
-    }
-
-    .icon {
-      display: inline-block;
-      margin-right: 5px;
-      font-style: normal;
-      min-width: 18px;
-    }
-
-    .gift-info {
-      background-color: #f8f8f8;
-      padding: 8px;
-      border-radius: 5px;
-      border-left: 3px solid #67c8ff;
-    }
-
-    .map-link {
-      color: #4285F4;
-      text-decoration: none;
-      font-size: 12px;
-      margin-left: 5px;
-    }
-
-    .map-link:hover {
-      text-decoration: underline;
-    }
-
-    #toggleDetailsBtn {
-      display: block;
-      width: 100%;
-      background-color: #f1f1f1;
-      border: none;
-      padding: 5px;
-      margin-top: 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-
-    #toggleDetailsBtn:hover {
-      background-color: #e1e1e1;
-    }
-    
-    /* Modal overlay */
-    #modalOverlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    
-    #modalContent {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      width: 400px;
-      max-width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
-      text-align: left;
-      position: relative;
-    }
-    
-    #modalContent h2 {
-      margin-top: 0;
-      color: #4285F4;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    
-    #modalContent button.close {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      cursor: pointer;
-      background: none;
-      border: none;
-      font-size: 20px;
-      color: #999;
-    }
-    
-    #modalContent button.close:hover {
-      color: #333;
-    }
-    
-    /* Form styling */
-    #rsvpForm {
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .form-group {
-      margin-bottom: 15px;
-    }
-    
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-      color: #444;
-    }
-    
-    input[type="text"],
-    input[type="email"],
-    input[type="tel"],
-    input[type="number"],
-    textarea,
-    select {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    
-    .radio-group {
-      display: flex;
-      gap: 15px;
-      margin-top: 5px;
-    }
-    
-    .radio-option {
-      display: flex;
-      align-items: center;
-    }
-    
-    .radio-option input {
-      margin-right: 5px;
-    }
-    
-    button[type="submit"] {
-      background-color: #4285F4;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-      transition: background-color 0.3s;
-    }
-    
-    button[type="submit"]:hover {
-      background-color: #3367d6;
-    }
-    
-    .success-message {
-      display: none;
-      text-align: center;
-      padding: 20px;
-    }
-    
-    .success-message h3 {
-      color: #4CAF50;
-      margin-bottom: 15px;
-    }
-    
-    .required::after {
-      content: " *";
-      color: #e53935;
-    }
-    
-    #guestNamesSection {
-      margin-top: 10px;
-      padding: 10px;
-      background-color: #f5f5f5;
-      border-radius: 4px;
-      display: none;
-    }
-    
-    /* Responsive styles */
     @media (max-width: 768px) {
-      .event-details-panel {
-        max-width: 100%;
-        width: 90%;
-        margin: 10px auto;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      }
+      .duckling { width: 30px; height: 30px; }
       
-      .container {
-        width: 98%;
-        height: 250px; /* Fixed height for mobile */
+      #plankOverlay { background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); }
+      #plankPanel { 
+        width: 100%; height: 100%; max-width: none; max-height: none; 
+        border: none; border-radius: 0; 
+        display: flex; flex-direction: column; 
       }
-      
-      #openRsvpBtn {
-        position: fixed;
-        top: auto;
-        bottom: 20px;
-        right: 20px;
-        margin: 0;
-        display: block;
-        z-index: 200;
-        padding: 12px 24px;
-        font-size: 18px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-      }
-      
-      h1 {
-        margin-top: 15px;
-        font-size: 24px;
-      }
-      
-      .narwhal-container {
-        width: 200px; /* Much smaller on mobile */
-      }
-    }
-    
-    @media (max-width: 600px) {
-      #modalContent {
-        width: 90%;
-        padding: 15px;
-      }
-      
-      .radio-group {
-        flex-direction: column;
-        gap: 5px;
-      }
-      
-      .event-details h2 {
-        font-size: 20px;
-      }
-      
-      .bubble {
-        width: 80px !important;
-        height: 80px !important;
-      }
-      
-      .bubble-text {
-        font-size: 12px;
-      }
-    }
-    
-    /* Extra small devices */
-    @media (max-width: 480px) {
-      .container {
-        height: 180px; /* Even smaller container height */
-      }
-      
-      .narwhal-container {
-        width: 40px; /* Tiny narwhal for small screens */
-      }
-      
-      .event-details-panel h3 {
-        font-size: 14px;
-        padding: 8px 10px;
-      }
-      
-      .event-essential-info {
-        padding: 8px;
-        font-size: 14px;
-      }
-      
-      .event-title {
-        font-size: 16px;
-      }
-      
-      .icon {
-        min-width: 14px;
-      }
-      
-      .bubble {
-        width: 50px !important; /* Even smaller bubbles on mobile */
-        height: 50px !important;
-      }
-      
-      .bubble-text {
-        font-size: 10px; /* Smaller text in bubbles */
-      }
+      #plankHeader { padding: 15px 20px; font-size: 1.2rem; }
+      #rsvpForm { grid-template-columns: 1fr; gap: 12px; padding: 20px; overflow-y: auto; }
+      input, textarea, select { padding: 12px; font-size: 16px; } 
     }
   </style>
 </head>
+
 <body>
   <div class="page-wrapper">
-    <!-- Main RSVP button -->
-    <button id="openRsvpBtn">RSVP Now</button>
-    
-    <h1>You're Invited!</h1>
-    <div class="event-details">
-      <h2 id="event-title-header">Loading Event...</h2>
-      <p id="event-description-short">Please wait while we load the event details...</p>
+    <h1>Callie's Duck Pond Party</h1>
+
+    <div class="event-details-panel">
+      <h3 id="detailsHeader">Event Details <span id="detailsCaret">▼</span></h3>
+      <div class="event-details-content" id="detailsContent">
+        <h2 id="event-title"></h2>
+        <p id="event-desc"></p>
+        <p><strong>When:</strong> <span id="event-date"></span></p>
+        <p><strong>Where:</strong> <span id="event-location"></span></p>
+        <p id="event-location-details"></p>
+        <p><strong>🎁 Gift Ideas:</strong> <span id="gifts-details"></span></p>
+      </div>
     </div>
 
-    <!-- Event Details Panel -->
-    <div class="event-details-panel event-details-collapsed">
-      <h3>
-        Event Details
-        <button class="event-header-button" id="headerToggleBtn">Show More</button>
-      </h3>
-      
-      <!-- Essential info - always visible -->
-      <div class="event-essential-info">
-        <div class="event-title" id="event-title">Loading...</div>
+    <div class="container" id="pondContainer">
+      <div id="sceneCamera">
+        <svg id="sceneSvg" viewBox="0 0 1200 700" preserveAspectRatio="none">
+          <path id="duckPath" d="M 220 620 Q 350 640, 480 580" fill="none" stroke="transparent" />
+        </svg>
         
-        <div class="event-datetime">
-          <i class="icon">📅</i> <span id="event-date">Loading...</span>
-        </div>
+        <img id="lsDuck" src="https://i.imgur.com/DAZiu3E.png" />
+        <img id="lemonadeStand" src="https://i.imgur.com/IwdHsys.png" />
+        <div id="standClickZone"></div>
         
-        <div class="event-datetime">
-          <i class="icon">⏰</i> <span id="event-time">Loading...</span>
-        </div>
-        
-        <div class="event-location-line">
-          <i class="icon">📍</i> <span id="event-location">Loading...</span>
-          <a href="#" id="location-link" target="_blank" class="map-link">[Map]</a>
-        </div>
-      </div>
-      
-      <!-- Additional details - collapsible -->
-      <div class="event-details-content">
-        <div class="event-detail" id="event-description">Loading...</div>
-        <div class="event-detail gift-info" id="event-gift-info"><i class="icon">🎁</i> <span>Loading...</span></div>
-        <div class="event-detail" id="event-dress-code"><i class="icon">👔</i> <span>Loading...</span></div>
-        <div class="event-detail" id="event-additional-info">Loading...</div>
-        <button id="toggleDetailsBtn">Hide Details</button>
-      </div>
-    </div>
-    
-    <div class="container" id="bubbleContainer">
-      <!-- SVG Path for narwhal movement -->
-      <svg class="debug-path">
-        <path id="motionPath" d="M 0 491 Q 0 491, 1 491 Q 2 491, 2 491 Q 5 491, 7 491 Q 12 491, 17 491 Q 24 489, 28 488 Q 31 488, 33 487 Q 39 485, 46 484 Q 56 481, 66 479 Q 74 478, 77 477 Q 79 477, 81 476 Q 85 475, 90 475 Q 99 471, 106 469 Q 113 468, 120 465 Q 124 463, 131 461 Q 138 458, 144 456 Q 148 454, 151 452 Q 154 450, 158 448 Q 163 445, 166 442 Q 171 438, 178 432 Q 187 425, 196 418 Q 207 409, 214 403 Q 221 397, 225 392 Q 231 384, 236 377 Q 245 366, 252 356 Q 257 347, 262 340 Q 266 334, 270 327 Q 275 322, 277 315 Q 279 311, 281 308 Q 282 305, 283 302 Q 284 298, 285 295 Q 286 292, 286 288 Q 286 285, 287 282 Q 287 280, 287 277 Q 287 275, 287 273 Q 287 272, 287 270 Q 286 269, 285 267 Q 284 266, 283 265 Q 282 264, 281 263 Q 279 261, 278 261 Q 277 260, 275 259 Q 273 258, 271 258 Q 270 257, 268 257 Q 266 257, 265 257 Q 263 257, 262 257 Q 260 257, 258 257 Q 257 257, 255 258 Q 253 259, 251 259 Q 248 261, 246 263 Q 244 264, 242 265 Q 240 267, 238 269 Q 235 271, 233 273 Q 231 275, 230 278 Q 228 280, 226 283 Q 224 285, 221 289 Q 220 292, 218 295 Q 216 299, 215 301 Q 212 307, 210 312 Q 208 315, 207 319 Q 204 323, 203 328 Q 201 333, 199 337 Q 197 342, 196 346 Q 195 350, 194 353 Q 192 358, 192 362 Q 191 367, 191 370 Q 190 376, 190 382 Q 190 390, 190 397 Q 190 401, 191 405 Q 191 407, 192 409 Q 193 413, 194 416 Q 197 422, 199 425 Q 201 428, 203 431 Q 205 434, 207 435 Q 208 437, 210 438 Q 213 440, 216 442 Q 222 445, 229 448 Q 236 450, 240 451 Q 245 451, 251 451 Q 260 451, 268 449 Q 277 448, 284 446 Q 290 445, 295 443 Q 302 441, 308 439 Q 314 436, 321 433 Q 325 431, 329 428 Q 334 424, 340 420 Q 346 415, 354 410 Q 359 406, 363 401 Q 369 395, 373 391 Q 378 385, 384 378 Q 388 374, 393 370 Q 398 367, 403 363 Q 408 360, 416 354 Q 422 351, 428 348 Q 432 346, 438 344 Q 442 343, 445 343 Q 451 343, 457 343 Q 465 343, 472 344 Q 479 345, 484 346 Q 488 348, 491 349 Q 493 350, 494 352 Q 496 353, 499 356 Q 500 357, 502 359 Q 503 361, 504 362 Q 506 365, 507 368 Q 508 373, 510 377 Q 512 380, 514 383 Q 515 384, 516 386 Q 516 387, 517 387 Q 517 388, 517 388 Q 517 388, 517 387 Q 514 383, 511 380 Q 510 379, 506 374 Q 503 371, 500 367 Q 496 364, 491 361 Q 486 359, 481 357 Q 477 356, 472 356 Q 470 356, 467 356 Q 464 356, 458 356 Q 452 356, 447 356 Q 442 356, 438 358 Q 433 360, 430 362 Q 425 365, 420 369 Q 417 371, 415 373 Q 413 374, 410 377 Q 407 379, 402 383 Q 399 387, 395 392 Q 390 399, 386 405 Q 381 414, 377 425 Q 374 431, 373 436 Q 372 438, 371 441 Q 371 442, 371 445 Q 370 448, 370 453 Q 370 461, 370 468 Q 371 474, 372 481 Q 374 485, 375 488 Q 378 490, 380 492 Q 383 494, 386 497 Q 390 501, 396 504 Q 405 511, 413 516 Q 423 519, 436 522 Q 445 522, 450 521 Q 455 520, 460 519 Q 468 518, 475 515 Q 481 512, 486 509 Q 487 508, 489 505 Q 490 503, 493 498 Q 496 493, 499 486 Q 502 478, 505 472 Q 507 467, 509 462 Q 509 459, 509 455 Q 509 451, 509 447 Q 509 442, 509 439 Q 508 437, 508 436 Q 506 434, 505 433 Q 504 432, 503 432 Q 503 432, 501 432 Q 499 432, 496 432 Q 493 433, 490 434 Q 486 438, 480 443 Q 476 447, 473 451 Q 471 453, 469 456 Q 467 461, 464 467 Q 463 473, 462 478 Q 462 482, 462 486 Q 463 487, 464 489 Q 464 490, 465 491 Q 467 492, 468 494 Q 471 495, 474 497 Q 477 497, 483 499 Q 493 499, 504 499 Q 511 498, 518 495 Q 525 493, 533 489 Q 540 486, 547 481 Q 552 477, 558 473 Q 565 466, 573 460 Q 579 452, 586 440 Q 591 429, 595 416 Q 599 402, 603 387 Q 607 372, 613 353 Q 614 344, 614 337 Q 614 333, 613 331 Q 613 330, 612 329 Q 612 328, 612 328 Q 611 328, 611 328 Q 610 328, 609 329 Q 607 332, 605 334 Q 602 338, 597 346 Q 591 355, 587 364 Q 582 379, 577 395 Q 573 410, 570 423 Q 568 433, 567 442 Q 566 450, 566 456 Q 566 462, 566 468 Q 566 473, 568 478 Q 569 481, 571 484 Q 572 486, 575 489 Q 577 492, 579 493 Q 582 495, 586 495 Q 594 496, 604 498 Q 614 497, 628 495 Q 637 492, 645 490 Q 651 486, 655 482 Q 662 475, 668 466 Q 673 456, 678 446 Q 684 434, 688 425 Q 692 414, 696 400 Q 698 388, 699 376 Q 699 364, 699 354 Q 699 348, 698 345 Q 697 343, 696 342 Q 695 342, 694 341 Q 693 341, 691 341 Q 690 341, 688 341 Q 686 342, 684 344 Q 682 349, 677 360 Q 674 367, 671 374 Q 668 383, 665 392 Q 661 402, 658 414 Q 655 425, 654 435 Q 653 445, 652 452 Q 652 459, 652 467 Q 652 472, 654 478 Q 656 482, 658 486 Q 660 489, 662 491 Q 664 493, 666 495 Q 669 497, 676 499 Q 682 499, 688 499 Q 694 497, 700 496 Q 707 494, 714 492 Q 720 490, 723 487 Q 725 484, 729 475 Q 732 468, 735 460 Q 737 454, 739 448 Q 740 445, 740 442 Q 740 439, 740 436 Q 739 432, 737 429 Q 736 427, 734 425 Q 733 425, 733 425 Q 732 425, 730 426 Q 729 427, 727 429 Q 726 432, 724 435 Q 722 442, 721 450 Q 721 457, 721 462 Q 721 467, 721 470 Q 721 474, 721 479 Q 721 482, 722 485 Q 723 488, 726 491 Q 730 495, 735 498 Q 741 501, 749 504 Q 759 505, 771 506 Q 784 507, 798 506 Q 806 504, 814 500 Q 821 497, 830 493 Q 840 488, 851 484 Q 858 480, 860 478 Q 861 475, 862 472 Q 862 464, 862 455 Q 862 451, 861 447 Q 860 443, 858 439 Q 856 437, 853 435 Q 851 434, 850 434 Q 848 434, 846 434 Q 844 434, 840 434 Q 838 434, 835 435 Q 833 436, 824 438 Q 819 440, 815 442 Q 811 444, 809 446 Q 807 449, 805 452 Q 803 455, 800 462 Q 797 470, 795 479 Q 794 486, 794 493 Q 794 498, 795 505 Q 797 508, 798 513 Q 800 516, 802 520 Q 806 525, 810 531 Q 814 534, 816 536 Q 818 537, 820 538 Q 823 540, 828 541 Q 833 543, 838 544 Q 841 544, 847 545 Q 850 545, 855 545 Q 858 545, 860 545 Q 862 544, 864 544 Q 865 543, 867 543 Q 869 543, 870 542 Q 872 542, 873 542 Q 873 542, 875 541 Q 876 540, 878 539 Q 880 539, 881 538 Q 881 537, 883 536 Q 885 535, 887 534 Q 888 532, 890 531 Q 891 530, 892 529 Q 893 528, 895 527 Q 896 525, 898 524 Q 899 522, 901 520 Q 903 518, 905 516 Q 910 512, 912 510 Q 914 508, 916 506 Q 918 504, 920 502 Q 924 499, 930 494 Q 935 488, 939 483 Q 943 477, 949 470 Q 954 463, 959 454 Q 965 445, 972 433 Q 976 424, 981 415 Q 984 407, 987 398 Q 989 390, 994 376 Q 999 364, 1005 349 Q 1009 336, 1012 322 Q 1013 309, 1013 293 Q 1013 283, 1010 275 Q 1009 272, 1008 268 Q 1006 266, 1003 261 Q 1000 257, 997 255 Q 995 254, 994 253 Q 993 253, 991 253 Q 989 253, 988 253 Q 987 253, 985 254 Q 984 256, 982 259 Q 979 264, 975 271 Q 972 281, 969 291 Q 967 300, 966 311 Q 964 322, 964 336 Q 964 351, 964 365 Q 964 378, 964 389 Q 964 403, 964 418 Q 966 435, 970 448 Q 972 460, 974 470 Q 977 479, 979 486 Q 981 491, 983 496 Q 986 501, 988 505 Q 992 509, 996 513 Q 1000 516, 1001 517 Q 1004 519, 1007 520 Q 1011 522, 1016 523 Q 1023 524, 1028 525 Q 1035 526, 1045 527 Q 1055 529, 1065 530 Q 1076 531, 1083 532 Q 1092 532, 1099 532 Q 1109 532, 1117 532 Q 1125 532, 1136 532 Q 1143 532, 1147 532 Q 1151 532, 1155 532 Q 1161 532, 1167 532 Q 1170 532, 1172 532 Q 1174 532, 1175 532 Q 1178 532, 1180 532 Q 1182 532, 1183 532 Q 1183 532, 1184 532 Q 1185 532, 1185 531" fill="none" stroke="white" stroke-width="2.5" stroke-dasharray="5,5"></path>
-      </svg>
-      
-      <!-- Narwhal container -->
-      <div class="narwhal-container" id="narwhalContainer">
-        <img src="https://i.imgur.com/YXIiqDM.png" alt="Narwhal">
-      </div>
-      <!-- Bubbles will be added via JavaScript after successful RSVPs -->
-    </div>
-  </div>
-  
-  <!-- Modal for RSVP Form -->
-  <div id="modalOverlay">
-    <div id="modalContent">
-      <button class="close" id="closeModal">×</button>
-      
-      <!-- Main form -->
-      <div id="rsvpFormContainer">
-        <h2>RSVP Form</h2>
-        <form id="rsvpForm">
-          <div class="form-group">
-            <label for="nameInput" class="required">Your Name:</label>
-            <input type="text" id="nameInput" name="name" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="emailInput">Email:</label>
-            <input type="email" id="emailInput" name="email" placeholder="your@email.com">
-          </div>
-          
-          <div class="form-group">
-            <label for="phoneInput">Phone Number:</label>
-            <input type="tel" id="phoneInput" name="phone" placeholder="(555) 123-4567">
-          </div>
-          
-          <div class="form-group">
-            <label class="required">Will you be attending?</label>
-            <div class="radio-group">
-              <div class="radio-option">
-                <input type="radio" id="attendingYes" name="attending" value="Y" required checked>
-                <label for="attendingYes">Yes, I'll be there!</label>
-              </div>
-              <div class="radio-option">
-                <input type="radio" id="attendingNo" name="attending" value="N">
-                <label for="attendingNo">Sorry, I can't make it</label>
-              </div>
-              <div class="radio-option">
-                <input type="radio" id="attendingMaybe" name="attending" value="Maybe">
-                <label for="attendingMaybe">Maybe</label>
-              </div>
-            </div>
-          </div>
-          
-          <div class="form-group" id="guestsGroup">
-            <label for="guestsInput">Number of guests (including yourself):</label>
-            <input type="number" id="guestsInput" name="guests" min="1" value="1">
-            
-            <div id="guestNamesSection">
-              <label for="guestNamesInput">Names of additional guests:</label>
-              <textarea id="guestNamesInput" name="guestNames" rows="2" placeholder="Please list the names of anyone coming with you"></textarea>
-            </div>
-          </div>
-          
-          <div class="form-group" id="dietaryGroup">
-            <label for="dietaryInput">Dietary restrictions or allergies:</label>
-            <textarea id="dietaryInput" name="dietary" rows="2" placeholder="Please list any dietary restrictions or allergies"></textarea>
-          </div>
-          
-          <div class="form-group">
-            <label for="commentsInput">Additional comments:</label>
-            <textarea id="commentsInput" name="comments" rows="3" placeholder="Anything else you'd like to share?"></textarea>
-          </div>
-          
-          <button type="submit">Submit RSVP</button>
-        </form>
-      </div>
-      
-      <!-- Success message (shown after form submission) -->
-      <div id="successMessage" class="success-message">
-        <h3>Thank You!</h3>
-        <p>Your RSVP has been successfully recorded.</p>
-        <p>We look forward to celebrating with you!</p>
+        <div id="lsSpeech" class="hidden"><span id="lsSpeechText"></span></div>
       </div>
     </div>
   </div>
-  
+
+  <div id="plankOverlay">
+    <div id="plankPanel">
+      <div id="plankHeader">
+        <span>RSVP ON THE PLANK</span>
+        <button type="button" onclick="toggleForm(false)" style="background:red; color:white; border:none; cursor:pointer; padding:4px 12px; border-radius:4px; font-weight:bold; font-size:16px;">✕</button>
+      </div>
+      <form id="rsvpForm">
+        <div><label>Your Name</label><input name="name" type="text" required /></div>
+        <div><label>Email</label><input name="email" type="email" required /></div>
+        <div><label>Phone</label><input name="phone" type="tel" /></div>
+        <div><label>Guests</label><input name="guests" type="number" value="1" min="1" /></div>
+        <div class="full"><label>Attending?</label>
+          <select name="attending"><option value="Y">Yes!</option><option value="Maybe">Maybe</option><option value="N">No</option></select>
+        </div>
+        <div class="full"><label>Comments</label><textarea name="comments" rows="2"></textarea></div>
+        <button id="submitBtn" class="full" type="submit">Submit RSVP (Quack!)</button>
+      </form>
+    </div>
+  </div>
+
+  <audio id="quackSound" src="https://www.soundjay.com/nature/sounds/duck-quack-1.mp3" preload="auto"></audio>
+
   <script>
-    // ==========================================================================
-    // CONFIGURATION
-    // ==========================================================================
-    
-    // Your Google Apps Script web app URL
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyu448Wbhua8pFt5rS3KLc47s2soTBY_XzQCLeIdW5VpcYRHCVwYIdj90cDmBGvCBa1Yg/exec';
-    
-    // ==========================================================================
-    // INITIALIZATION
-    // ==========================================================================
-    
-    // Initialize DOM elements
-    const narwhal = document.getElementById("narwhalContainer");
-    const path = document.querySelector("#motionPath");
-    const modalOverlay = document.getElementById("modalOverlay");
-    const rsvpForm = document.getElementById("rsvpForm");
-    const rsvpFormContainer = document.getElementById("rsvpFormContainer");
-    const successMessage = document.getElementById("successMessage");
-    const nameInput = document.getElementById("nameInput");
-    const bubbleContainer = document.getElementById("bubbleContainer");
-    const openRsvpBtn = document.getElementById("openRsvpBtn");
-    const attendingYes = document.getElementById("attendingYes");
-    const attendingNo = document.getElementById("attendingNo");
-    const attendingMaybe = document.getElementById("attendingMaybe");
-    const guestsGroup = document.getElementById("guestsGroup");
-    const dietaryGroup = document.getElementById("dietaryGroup");
-    const guestsInput = document.getElementById("guestsInput");
-    const guestNamesSection = document.getElementById("guestNamesSection");
-    
-    // Event details elements
-    const eventTitleHeader = document.getElementById("event-title-header");
-    const eventDescShort = document.getElementById("event-description-short");
-    const detailsPanel = document.querySelector('.event-details-panel');
-    const headerToggleBtn = document.getElementById('headerToggleBtn');
-    const detailsToggleBtn = document.getElementById('toggleDetailsBtn');
-    
-    // Animation variables
-    let currentT = 0;
-    let lastTime = null;
-    let forward = true;
-    let prevAngle = null;
-    let angleSmoothing = 0.2;
-    
-    // Store existing bubbles for collision detection
-    const existingBubbles = [];
-    
-    // Narwhal bubble variables
-    let prevLeft = null;
-    let bubbleCounter = 0;
-    let autoBubbleInterval = null;
+    // ==========================================
+    // PASTE YOUR GOOGLE SCRIPT WEB APP URL HERE:
+    // ==========================================
+    const WEB_APP_URL = "YOUR_WEB_APP_URL_HERE";
 
-    // Debug function - logs to console only
-    function logDebug(message) {
-      // Uncomment for debugging
-      // console.log(message);
+
+    const ASSETS = {
+      LS_CLOSED: "https://i.imgur.com/DAZiu3E.png", 
+      LS_OPEN: "https://i.imgur.com/nl9v3EX.png",
+      DUCK_COLORS: [
+        { closed: "https://i.imgur.com/nAZgAiF.png", open: "https://i.imgur.com/gBq1hUM.png" }, 
+        { closed: "https://i.imgur.com/NEKUFdH.png", open: "https://i.imgur.com/MqP6SxY.png" }, 
+        { closed: "https://i.imgur.com/ahPfxOt.png", open: "https://i.imgur.com/xjPuiBL.png" }, 
+        { closed: "https://i.imgur.com/2iJeMEl.png", open: "https://i.imgur.com/SqF7pwb.png" } 
+      ]
+    };
+
+    let isGreeting = false;
+    let preloadedQuackAudio = null; 
+    let duckCount = 0; 
+    let callieSpawned = false; 
+    const pondDuckEls = [];
+
+    const pond = document.getElementById('pondContainer');
+    const cameraEl = document.getElementById('sceneCamera');
+    const quack = document.getElementById('quackSound');
+
+    const POND_WATER = { cx: 780, cy: 510, rx: 280, ry: 85, margin: 0.85 };
+    const DUCK_MIN_DIST = 70; 
+
+    function inPondWater(x, y) {
+      if (x < 500) return false;
+      const dx = x - POND_WATER.cx, dy = y - POND_WATER.cy;
+      const nx = dx / POND_WATER.rx, ny = dy / POND_WATER.ry;
+      return (nx * nx + ny * ny) <= (POND_WATER.margin * POND_WATER.margin);
     }
-    
-    // ==========================================================================
-    // ANIMATION FUNCTIONS
-    // ==========================================================================
-    
-    /**
-     * Normalize angle between -PI and PI to avoid jumps
-     */
-    function normalizeAngle(angle) {
-      while (angle > Math.PI) angle -= 2 * Math.PI;
-      while (angle < -Math.PI) angle += 2 * Math.PI;
-      return angle;
+
+    function getNextPondSlot() {
+      for (let tries = 0; tries < 500; tries++) {
+        const candidate = {
+          x: POND_WATER.cx + (Math.random() * 2 - 1) * POND_WATER.rx,
+          y: POND_WATER.cy + (Math.random() * 2 - 1) * POND_WATER.ry
+        };
+        if (!inPondWater(candidate.x, candidate.y)) continue;
+        let tooClose = false;
+        for (const el of pondDuckEls) {
+          const sx = Number(el.dataset.slotX || 0), sy = Number(el.dataset.slotY || 0);
+          const dist = Math.sqrt((candidate.x-sx)**2 + (candidate.y-sy)**2);
+          if (sx && sy && dist < DUCK_MIN_DIST) { tooClose = true; break; }
+        }
+        if (!tooClose) return candidate;
+      }
+      return { x: POND_WATER.cx, y: POND_WATER.cy };
     }
-    
-    /**
-     * Find shortest angle distance
-     */
-    function getAngleDifference(a, b) {
-      return normalizeAngle(b - a);
-    }
-    
-    /**
-     * Adjust the SVG path and animation for mobile screens
-     */
-    function adjustForMobile() {
-      // Simple adjustments - just set angle smoothing
-      if (window.innerWidth <= 768) {
-        // More responsive turning on mobile
-        angleSmoothing = 0.4;
-      } else {
-        // Desktop smoothing
-        angleSmoothing = 0.2;
+
+    function setDuckTransform(d, lookX, extra = "") {
+      d.style.transform = `translate(-50%, -50%) scaleX(${lookX}) ${extra}`;
+      const namePlate = d.querySelector('.duckling-name');
+      if (namePlate) {
+        namePlate.style.transform = `translateX(-50%) scaleX(${lookX})`;
       }
     }
-    
-    /**
-     * Animate the narwhal along the SVG path
-     */
-    function animate(timestamp) {
-      if (!lastTime) {
-        lastTime = timestamp;
-        requestAnimationFrame(animate);
+
+    async function startSpeechLoop() {
+      const line = "Got any grapes?";
+      while(true) {
+        if (isGreeting) { await new Promise(r => setTimeout(r, 1000)); continue; }
+        document.getElementById('lsSpeechText').textContent = ""; 
+        document.getElementById('lsSpeech').classList.remove('hidden');
+        for (let i = 0; i < line.length; i++) {
+          if (isGreeting) break;
+          document.getElementById('lsSpeechText').textContent += line[i];
+          document.getElementById('lsDuck').src = (i % 2 === 0) ? ASSETS.LS_OPEN : ASSETS.LS_CLOSED;
+          await new Promise(r => setTimeout(r, 90));
+        }
+        document.getElementById('lsDuck').src = ASSETS.LS_CLOSED;
+        await new Promise(r => setTimeout(r, 3500));
+        if (!isGreeting) document.getElementById('lsSpeech').classList.add('hidden');
+        await new Promise(r => setTimeout(r, 15000));
+      }
+    }
+
+    function startQuackLoop() {
+      setInterval(() => {
+        const readyDucks = pondDuckEls.filter(el => el.classList.contains('floating'));
+        if (readyDucks.length === 0) return;
+        const luckyDuck = readyDucks[Math.floor(Math.random() * readyDucks.length)];
+        triggerDuckQuack(luckyDuck);
+      }, 30000);
+    }
+
+    function triggerDuckQuack(d) {
+      const imgClosed = d.querySelector('.duck-closed');
+      const imgOpen = d.querySelector('.duck-open');
+      if (!imgClosed || !imgOpen) return;
+      
+      let open = false;
+      const qInt = setInterval(() => { 
+        open = !open; 
+        imgClosed.style.opacity = open ? '0' : '1';
+        imgOpen.style.opacity = open ? '1' : '0';
+      }, 150);
+
+      if (d.classList.contains('callie-vip')) {
+        const transformStr = d.style.transform || "";
+        const match = transformStr.match(/scaleX\(([^)]+)\)/);
+        const lookX = match ? parseFloat(match[1]) : 1; 
+        const dir = -lookX;
+
+        const isMobile = window.innerWidth <= 768;
+        const duckBaseSize_px = isMobile ? 30 : 70; 
+
+        const beakOffset_px = (duckBaseSize_px / 2) * dir;
+        const spawnOffsetX_px = beakOffset_px + (15 * dir);
+        const spawnOffsetY_px = -5 * (isMobile ? 0.5 : 1); 
+
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble spectral-bubble';
+            
+            const sizeMin = isMobile ? 3 : 6;
+            const sizeMax = isMobile ? 6 : 12;
+            const size = sizeMin + Math.random() * (sizeMax - sizeMin);
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            
+            const randomSpread = isMobile ? 3 : 5;
+            const randomSpreadX = (Math.random() * 2 - 1) * randomSpread; 
+            const randomSpreadY = (Math.random() * 2 - 1) * randomSpread; 
+
+            const finalSpawnX_px = parseFloat(d.style.left) + spawnOffsetX_px + randomSpreadX;
+            const finalSpawnY_px = parseFloat(d.style.top) + spawnOffsetY_px + randomSpreadY;
+
+            bubble.style.left = finalSpawnX_px + 'px';
+            bubble.style.top = finalSpawnY_px + 'px';
+            bubble.style.zIndex = Math.floor(finalSpawnY_px);
+            
+            cameraEl.appendChild(bubble);
+            setTimeout(() => bubble.remove(), 1500); 
+          }, i * 350); 
+        }
+      }
+
+      let audio = preloadedQuackAudio ? new Audio(preloadedQuackAudio) : quack.cloneNode(); 
+      audio.volume = 0.4; 
+      audio.play().catch(e=>{});
+
+      setTimeout(() => { 
+        clearInterval(qInt); 
+        imgClosed.style.opacity = '1';
+        imgOpen.style.opacity = '0';
+      }, 1500);
+    }
+
+    function startGlideLoop() {
+      setInterval(() => {
+        pondDuckEls.forEach((d) => {
+          if (!d.classList.contains('floating') || d.dataset.isGliding === "true") return;
+          if (Math.random() > 0.6) return;
+          setTimeout(() => glideDuckToNewSpot(d), Math.random() * 3000);
+        });
+      }, 10000);
+    }
+
+    function glideDuckToNewSpot(d) {
+      const newSlot1200 = getNextPondSlot();
+      const pondW = pond.clientWidth || 1200, pondH = pond.clientHeight || 700;
+      const targetX = newSlot1200.x * (pondW / 1200), targetY = newSlot1200.y * (pondH / 700);
+      const currentX = parseFloat(d.style.left);
+      
+      d.dataset.isGliding = "true";
+      d.dataset.slotX = newSlot1200.x; d.dataset.slotY = newSlot1200.y;
+
+      const lookDir = targetX > currentX ? -1 : 1;
+      setDuckTransform(d, lookDir, "scale(0.85)");
+
+      const startTime = performance.now();
+      const duration = 4000 + Math.random() * 2500;
+      const startX = currentX, startY = parseFloat(d.style.top);
+
+      function move(now) {
+        const elapsed = now - startTime;
+        const ease = Math.min(elapsed / duration, 1); 
+        const curX = startX + (targetX - startX) * ease, curY = startY + (targetY - startY) * ease;
+        d.style.left = curX + 'px'; d.style.top = curY + 'px'; d.style.zIndex = Math.floor(curY);
+        if (ease < 1) requestAnimationFrame(move);
+        else d.dataset.isGliding = "false";
+      }
+      requestAnimationFrame(move);
+    }
+
+    function spawnDuck(name, isNew = false) {
+      const safeName = (name || "Guest").trim();
+      const isCallie = safeName.toLowerCase() === 'callie';
+      
+      if (isCallie) {
+        if (callieSpawned) return; 
+        callieSpawned = true;
+      }
+
+      const path = document.getElementById('duckPath');
+      const d = document.createElement('div');
+      d.className = 'duckling';
+      
+      if (isCallie) d.classList.add('callie-vip');
+
+      const myIndex = duckCount++;
+      
+      let closedImg, openImg;
+      if (isCallie) {
+        closedImg = "https://i.imgur.com/mdrOVli.png";
+        openImg = "https://i.imgur.com/PUuv6EM.png";
+      } else {
+        const col = ASSETS.DUCK_COLORS[myIndex % ASSETS.DUCK_COLORS.length];
+        closedImg = col.closed; openImg = col.open;
+      }
+
+      d.innerHTML = `
+        <div class="duck-float-wrap">
+          <img class="duck-closed" src="${closedImg}">
+          <img class="duck-open" src="${openImg}">
+          <div class="duckling-name">${safeName}</div>
+        </div>
+      `;
+      
+      cameraEl.appendChild(d);
+      
+      const pondW = pond.clientWidth || 1200, pondH = pond.clientHeight || 700;
+      const slot1200 = getNextPondSlot();
+      const slot = { x: slot1200.x * (pondW / 1200), y: slot1200.y * (pondH / 700) };
+
+      d.dataset.slotX = slot1200.x; d.dataset.slotY = slot1200.y;
+      pondDuckEls.push(d);
+
+      if (!isNew) {
+        d.style.left = slot.x + 'px'; d.style.top = slot.y + 'px';
+        d.classList.add('floating');
+        setDuckTransform(d, 1, "scale(0.85)");
+        d.style.zIndex = Math.floor(slot.y);
         return;
       }
-      
-      // Calculate time delta for consistent animation speed
-      const delta = timestamp - lastTime;
-      lastTime = timestamp;
 
-      // Calculate progression along path
-      const totalLength = path.getTotalLength();
-      
-      // Speed consistent across devices
-      const speed = 0.000035;
-      currentT += (forward ? 1 : -1) * delta * speed;
+      triggerDuckQuack(d);
+      setTimeout(() => triggerDuckQuack(d), 2500);
 
-      // Reverse direction at the ends
-      if (currentT >= 1) {
-        currentT = 1;
-        forward = false;
-      } else if (currentT <= 0) {
-        currentT = 0;
-        forward = true;
-      }
-
-      // Get position on path 
-      const pos = path.getPointAtLength(totalLength * currentT);
+      const pathLen = path.getTotalLength(), start = performance.now();
       
-      // Calculate look-ahead for angle
-      const lookAheadDistance = 15;
-      const lookAheadT = Math.min(totalLength, totalLength * currentT + lookAheadDistance);
-      const ahead = path.getPointAtLength(lookAheadT);
-      const angle = Math.atan2(ahead.y - pos.y, ahead.x - pos.x);
-      
-      // Initialize prevAngle if this is the first frame
-      if (prevAngle === null) {
-        prevAngle = angle;
-      }
-      
-      // Smooth the angle with simple interpolation
-      const angleDiff = getAngleDifference(prevAngle, angle);
-      prevAngle = normalizeAngle(prevAngle + angleDiff * angleSmoothing);
-      
-      let posX = pos.x;
-      let posY = pos.y;
-      
-      // Only apply scaling for mobile devices
-      if (window.innerWidth <= 480) {
-        const containerRect = bubbleContainer.getBoundingClientRect();
+      function frame(now) {
+        const elapsed = now - start;
         
-        // Scale the coordinates to fit within 80% of the container
-        const scaleX = (containerRect.width * 0.8) / 1185;
-        const scaleY = (containerRect.height * 0.8) / 550;
-        const scale = Math.min(scaleX, scaleY);
-        
-        // Center the path in container
-        const centerX = containerRect.width * 0.5;
-        const centerY = containerRect.height * 0.5;
-        
-        // Apply scale and center offset
-        posX = (pos.x * scale) + centerX - ((1185 * scale) / 2);
-        posY = (pos.y * scale) + centerY - ((550 * scale) / 2);
-        
-        // Ensure narwhal stays fully visible by limiting its position
-        const narwhalSize = narwhal.clientWidth;
-        const padding = narwhalSize / 2;
-        
-        posX = Math.max(padding, Math.min(containerRect.width - padding, posX));
-        posY = Math.max(padding, Math.min(containerRect.height - padding, posY));
-      } else if (window.innerWidth <= 768) {
-        // Medium sized mobile devices
-        const containerRect = bubbleContainer.getBoundingClientRect();
-        
-        // Apply less aggressive scaling
-        const scaleX = (containerRect.width * 0.9) / 1185;
-        const scaleY = (containerRect.height * 0.9) / 550;
-        const scale = Math.min(scaleX, scaleY);
-        
-        // Center
-        const centerX = containerRect.width * 0.5;
-        const centerY = containerRect.height * 0.5;
-        
-        posX = (pos.x * scale) + centerX - ((1185 * scale) / 2);
-        posY = (pos.y * scale) + centerY - ((550 * scale) / 2);
-        
-        // Light constraints
-        const narwhalSize = narwhal.clientWidth;
-        const padding = narwhalSize / 2;
-        
-        posX = Math.max(padding, Math.min(containerRect.width - padding, posX));
-        posY = Math.max(padding, Math.min(containerRect.height - padding, posY));
-      }
-      // For desktop, use the original position values
-      
-      // Apply position
-      narwhal.style.left = `${posX}px`;
-      narwhal.style.top = `${posY}px`;
-      
-      // Apply rotation
-      narwhal.style.transform = `translate(-50%, -50%) rotate(${prevAngle}rad) scaleX(${forward ? 1 : -1})`;
-
-      requestAnimationFrame(animate);
-    }
-    
-    /**
-     * Create tiny bubbles from narwhal
-     */
-    function createTinyBubble(narwhalContainer, rect, isMovingRight) {
-      // Create bubble element
-      const bubble = document.createElement("div");
-      bubble.className = "tiny-bubble";
-      
-      // Random size
-      const size = Math.random() * 3 + 3;
-      bubble.style.width = size + "px";
-      bubble.style.height = size + "px";
-      
-      // Get container dimensions
-      const containerRect = bubbleContainer.getBoundingClientRect();
-      
-      // Get narwhal's center position
-      const narwhalCenterX = rect.left + (rect.width * 0.5);
-      const narwhalCenterY = rect.top + (rect.height * 0.5);
-      
-      // Position bubbles based on direction - more toward the tail
-      let offsetX, offsetY;
-      
-      if (isMovingRight) {
-        // When moving right, position bubbles at left (tail)
-        offsetX = -rect.width * 0.4;
-        offsetY = rect.height * 0.1;
-      } else {
-        // When moving left, position bubbles at right (tail)
-        offsetX = rect.width * 0.4;
-        offsetY = rect.height * 0.1;
-      }
-      
-      // Add slight random variation
-      offsetX += (Math.random() - 0.5) * 3;
-      offsetY += (Math.random() - 0.5) * 3;
-      
-      // Calculate final position
-      const bubbleX = narwhalCenterX + offsetX;
-      const bubbleY = narwhalCenterY + offsetY;
-      
-      // Convert absolute positions to percentages relative to the container
-      const bubbleXPercent = ((bubbleX - containerRect.left) / containerRect.width) * 100;
-      const bubbleYPercent = ((bubbleY - containerRect.top) / containerRect.height) * 100;
-      
-      // Set position
-      bubble.style.left = bubbleXPercent + "%";
-      bubble.style.top = bubbleYPercent + "%";
-      
-      // Set animation duration
-      const duration = 1.5 + Math.random();
-      
-      // Apply animation based on direction
-      bubble.style.animation = `tinyBubbleFloat${isMovingRight ? 'Right' : 'Left'} ${duration}s ease-out forwards`;
-      
-      // Add to the bubble container
-      bubbleContainer.appendChild(bubble);
-      
-      // Remove the bubble element when animation is done
-      setTimeout(() => {
-        if (bubble.parentNode) {
-          bubble.parentNode.removeChild(bubble);
+        if (elapsed < 2500) {
+          const t = elapsed / 2500, pt = path.getPointAtLength(t * pathLen);
+          const px = { x: pt.x * (pondW/1200), y: pt.y * (pondH/700) };
+          d.style.left = px.x + 'px'; d.style.top = (px.y + Math.abs(Math.sin(now*0.01))* -6) + 'px';
+          setDuckTransform(d, -1, `scale(${1.6-t*0.4}) rotate(${Math.sin(now*0.01)*12}deg)`);
+          d.style.zIndex = Math.floor(px.y);
+        } else if (elapsed < 4500) {
+          const t = (elapsed - 2500) / 2000, endPt = path.getPointAtLength(pathLen);
+          const sX = endPt.x * (pondW/1200), sY = endPt.y * (pondH/700);
+          const curY = sY + (slot.y-sY)*t, curX = sX + (slot.x-sX)*t;
+          d.style.left = curX + 'px'; d.style.top = curY + 'px';
+          const finalFlip = slot.x > sX ? -1 : 1;
+          setDuckTransform(d, finalFlip, `scale(${1.2-t*0.35})`);
+          d.style.zIndex = Math.floor(curY);
+          if (t > 0.4) d.classList.add('floating');
         }
-      }, duration * 1000);
-    }
-    
-    /**
-     * Track narwhal movement and create bubbles
-     */
-    function updateNarwhalBubbles() {
-      const rect = narwhal.getBoundingClientRect();
-      const currentLeft = rect.left;
-      
-      if (prevLeft !== null) {
-        // Check if we're moving
-        if (Math.abs(currentLeft - prevLeft) > 0.5) {
-          bubbleCounter++;
-          // Reduce frequency 
-          if (bubbleCounter % 6 === 0) {
-            // Get the direction
-            const isMovingRight = currentLeft > prevLeft;
-            createTinyBubble(narwhal, rect, isMovingRight);
-          }
+
+        let camScale = 1;
+        if (elapsed < 1000) {
+            const t = elapsed / 1000;
+            const ease = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            camScale = 1 + ease * 1.2;
+        } else if (elapsed < 3500) {
+            camScale = 2.2;
+        } else if (elapsed < 4500) {
+            const t = (elapsed - 3500) / 1000;
+            const ease = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            camScale = 2.2 - ease * 1.2;
         }
-      }
-      
-      prevLeft = currentLeft;
-      requestAnimationFrame(updateNarwhalBubbles);
-    }
-    
-    /**
-     * Create bubbles periodically regardless of movement
-     */
-    function spawnBubblesAutomatically() {
-      // Generate 1-2 bubbles every call
-      const bubbleCount = Math.floor(Math.random() * 2) + 1;
-      
-      // Get the current narwhal position
-      const rect = narwhal.getBoundingClientRect();
-      
-      // Determine if the narwhal is facing right or left based on current transform
-      const transform = window.getComputedStyle(narwhal).transform;
-      const isMovingRight = !transform.includes('-1');
-      
-      // Create the bubbles
-      for (let i = 0; i < bubbleCount; i++) {
-        // Slight delay between bubbles if more than one
-        setTimeout(() => {
-          createTinyBubble(narwhal, rect, isMovingRight);
-        }, i * 100);
-      }
-    }
-    
-    /**
-     * Start automatic bubble generation
-     */
-    function startAutoBubbles() {
-      // Generate bubbles every 2-4 seconds
-      autoBubbleInterval = setInterval(() => {
-        spawnBubblesAutomatically();
-      }, Math.random() * 2000 + 2000);
-    }
-    
-    // ==========================================================================
-    // API INTERACTION FUNCTIONS
-    // ==========================================================================
-    
-    /**
-     * Load event details from the API
-     */
-    function loadEventDetails() {
-      logDebug("Loading event details from: " + SCRIPT_URL);
-      
-      fetch(`${SCRIPT_URL}?action=getEventDetails`)
-        .then(response => {
-          logDebug("Event details response status: " + response.status);
-          if (!response.ok) {
-            throw new Error('Network response was not ok: ' + response.status);
-          }
-          return response.json();
-        })
-        .then(details => {
-          logDebug("Event details loaded successfully");
-          displayEventDetails(details);
-        })
-        .catch(error => {
-          logDebug("Error loading event details: " + error.message);
-          // Use fallback data
-          displayEventDetails(getFallbackEventDetails());
-        });
-    }
-    
-    /**
-     * Fallback event details in case API fails
-     */
-    function getFallbackEventDetails() {
-      logDebug("Using fallback event details");
-      return {
-        TITLE: "Callie's Birthday Celebration",
-        DATE: "Saturday, April 28, 2025",
-        TIME: "12:00 PM - 2:00 PM",
-        LOCATION: "Kenwood Baptist Church - Pavillion",
-        LOCATION_LINK: "https://maps.app.goo.gl/eqZJb2o5WgAAMCZb7",
-        DESCRIPTION: "We are parked towards the back of the building (outside) in the pavillion area!",
-        GIFT_INFO: "No gifts are necessary, just your presence is required! If you insist on bringing Callie a gift, clothes are preferred because God has blessed her with plenty of toys already!",
-        DRESS_CODE: "Casual outdoor attire",
-        ADDITIONAL_INFO: "We'll have a thematic race and other games so bring your game faces!"
-      };
-    }
-    
-    /**
-     * Display event details in the UI
-     */
-    function displayEventDetails(details) {
-      // Update the main header
-      eventTitleHeader.textContent = details.TITLE || "Event Details";
-      eventDescShort.textContent = details.DESCRIPTION || "Join us for this special event!";
-      
-      // Update the essential info (always visible)
-      document.getElementById('event-title').textContent = details.TITLE || "";
-      document.getElementById('event-date').textContent = details.DATE || "";
-      document.getElementById('event-time').textContent = details.TIME || "";
-      document.getElementById('event-location').textContent = details.LOCATION || "";
-      
-      // Update the expandable details
-      document.getElementById('event-description').textContent = details.DESCRIPTION || "";
-      
-      if (document.getElementById('event-gift-info').querySelector('span')) {
-        document.getElementById('event-gift-info').querySelector('span').textContent = details.GIFT_INFO || "";
-      }
-      
-      if (document.getElementById('event-dress-code').querySelector('span')) {
-        document.getElementById('event-dress-code').querySelector('span').textContent = details.DRESS_CODE || "";
-      }
-      
-      document.getElementById('event-additional-info').textContent = details.ADDITIONAL_INFO || "";
-      
-      // Set location link if available
-      const locationLink = document.getElementById('location-link');
-      if (details.LOCATION_LINK) {
-        locationLink.href = details.LOCATION_LINK;
-        locationLink.style.display = "inline";
-      } else {
-        locationLink.style.display = "none";
-      }
-      
-      // Hide empty sections in the additional details
-      const allExpandableDetails = document.querySelectorAll('.event-details-content .event-detail');
-      allExpandableDetails.forEach(detail => {
-        // Check if the detail has content (either directly or in a span)
-        const span = detail.querySelector('span');
-        const content = span ? span.textContent : detail.textContent;
+
+        const duckX = parseFloat(d.style.left);
+        const duckY = parseFloat(d.style.top);
+        let cX = pondW / 2 - duckX * camScale;
+        let cY = pondH / 2 - duckY * camScale;
         
-        if (!content || content.trim() === "" || content === "Loading...") {
-          detail.style.display = "none";
-        }
-      });
-      
-      logDebug("Event details displayed: " + details.TITLE);
-    }
-    
-    /**
-     * Setup event details panel toggle
-     */
-    function setupEventDetailsToggle() {
-      const panel = document.querySelector('.event-details-panel');
-      const panelHeader = panel.querySelector('h3');
-      
-      // Toggle on header click or header button click
-      headerToggleBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        toggleDetailsPanel();
-      });
-      
-      panelHeader.addEventListener('click', function() {
-        toggleDetailsPanel();
-      });
-      
-      // Toggle on button click inside expanded view
-      detailsToggleBtn.addEventListener('click', function() {
-        toggleDetailsPanel();
-      });
-      
-      function toggleDetailsPanel() {
-        panel.classList.toggle('event-details-collapsed');
-        updateToggleButtonsText();
-      }
-      
-      function updateToggleButtonsText() {
-        if (panel.classList.contains('event-details-collapsed')) {
-          headerToggleBtn.textContent = "Show More";
-          detailsToggleBtn.textContent = "Hide Details";
+        cX = Math.max(pondW - pondW * camScale, Math.min(0, cX));
+        cY = Math.max(pondH - pondH * camScale, Math.min(0, cY));
+        cameraEl.style.transform = `translate(${cX}px, ${cY}px) scale(${camScale})`;
+
+        if (elapsed < 4500) {
+          requestAnimationFrame(frame);
         } else {
-          headerToggleBtn.textContent = "Hide";
-          detailsToggleBtn.textContent = "Hide Details";
+          const pathEnd = path.getPointAtLength(pathLen);
+          const finalFlip = slot.x > (pathEnd.x * (pondW/1200)) ? -1 : 1;
+          d.style.left = slot.x + 'px'; d.style.top = slot.y + 'px';
+          setDuckTransform(d, finalFlip, "scale(0.85)");
+          d.style.zIndex = Math.floor(slot.y);
+          d.classList.add('floating');
+          cameraEl.style.transform = `translate(0px, 0px) scale(1)`; 
         }
       }
-      
-      // Initialize the toggle button text
-      updateToggleButtonsText();
-    }
-    
-    /**
-     * Load existing RSVPs from the API
-     */
-    function loadExistingRsvps() {
-      logDebug("Fetching RSVPs from: " + SCRIPT_URL);
-      
-      fetch(`${SCRIPT_URL}?action=getExistingRsvps`)
-        .then(response => {
-          logDebug("API Response status: " + response.status);
-          if (!response.ok) {
-            throw new Error('Network response was not ok: ' + response.status);
-          }
-          return response.json();
-        })
-        .then(rsvps => {
-          logDebug("RSVPs received: " + JSON.stringify(rsvps));
-          if (rsvps && rsvps.length > 0) {
-            logDebug(`Creating ${rsvps.length} RSVP bubbles`);
-            
-            // Clear any existing bubbles first (except permanent ones)
-            const existingBubblesToRemove = document.querySelectorAll('.bubble:not([data-permanent="true"])');
-            existingBubblesToRemove.forEach(bubble => {
-              bubble.remove();
-            });
-            
-            // Remove them from our tracking array too
-            const indexesToRemove = [];
-            existingBubbles.forEach((bubble, index) => {
-              if (!bubble.hasAttribute("data-permanent")) {
-                indexesToRemove.push(index);
-              }
-            });
-            
-            for (let i = indexesToRemove.length - 1; i >= 0; i--) {
-              existingBubbles.splice(indexesToRemove[i], 1);
-            }
-            
-            // Create bubbles for each RSVP
-            rsvps.forEach(rsvp => {
-              // Only create bubbles for "Yes" responses
-              if (rsvp.attending === "Y") {
-                logDebug(`Creating bubble for ${rsvp.name}, status: ${rsvp.status}`);
-                createBubble(rsvp.name, rsvp.status === "Confirmed");
-              }
-            });
-          } else {
-            logDebug("No RSVPs found, creating sample bubbles");
-            // Create sample bubbles if no RSVPs
-            createSampleBubbles();
-          }
-        })
-        .catch(error => {
-          logDebug("Error loading RSVPs: " + error.message);
-          console.error("Error loading RSVPs:", error);
-          // Create sample bubbles on error
-          createSampleBubbles();
-        });
-    }
-    
-    /**
-     * Create sample bubbles for testing/preview
-     */
-    function createSampleBubbles() {
-      logDebug("Creating sample bubbles");
-      
-      // Clear any existing bubbles first (except permanent ones)
-      const existingBubblesToRemove = document.querySelectorAll('.bubble:not([data-permanent="true"])');
-      existingBubblesToRemove.forEach(bubble => {
-        bubble.remove();
-      });
-      
-      // Remove them from our tracking array too
-      const indexesToRemove = [];
-      existingBubbles.forEach((bubble, index) => {
-        if (!bubble.hasAttribute("data-permanent")) {
-          indexesToRemove.push(index);
-        }
-      });
-      
-      for (let i = indexesToRemove.length - 1; i >= 0; i--) {
-        existingBubbles.splice(indexesToRemove[i], 1);
-      }
-      
-      // Create sample bubbles
-      const sampleNames = ["Jane Smith", "John Doe", "Alex Johnson", "Samantha Lee"];
-      sampleNames.forEach((name, index) => {
-        const bubble = createBubble(name, index < 2);
-        bubble.setAttribute("data-sample", "true");
-      });
-    }
-    
-    /**
-     * Check for confirmed RSVPs
-     */
-    function checkForConfirmedRsvps() {
-      fetch(`${SCRIPT_URL}?action=getConfirmedRsvps`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(confirmedNames => {
-          if (confirmedNames && confirmedNames.length > 0) {
-            logDebug(`Found ${confirmedNames.length} confirmed RSVPs`);
-            confirmedNames.forEach(name => {
-              confirmBubble(name);
-            });
-          }
-        })
-        .catch(error => {
-          logDebug("Error checking confirmed RSVPs: " + error.message);
-          console.error("Error checking confirmed RSVPs:", error);
-        });
-    }
-    
-    // ==========================================================================
-    // BUBBLE CREATION FUNCTIONS
-    // ==========================================================================
-    
-    /**
-     * Check if two bubbles overlap
-     */
-    function doCirclesOverlap(x1, y1, r1, x2, y2, r2) {
-      // Calculate distance between centers
-      const dx = x1 - x2;
-      const dy = y1 - y2;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      // Add some padding to make sure bubbles aren't too close
-      const minDistance = r1 + r2 + 10;
-      
-      return distance < minDistance;
-    }
-    
-    /**
-     * Find a non-overlapping position for a new bubble
-     */
-    function findNonOverlappingPosition(size) {
-      const containerWidth = bubbleContainer.clientWidth;
-      const containerHeight = bubbleContainer.clientHeight;
-      
-      // Define the area bounds where bubbles can be placed (in px)
-      // Add some padding from edges to prevent bubbles being cut off
-      const padding = 20;
-      const minLeft = size / 2 + padding;
-      const maxLeft = containerWidth - size / 2 - padding;
-      const minTop = size / 2 + padding;
-      const maxTop = containerHeight - size / 2 - padding;
-      
-      let attempts = 0;
-      let maxAttempts = 100; // Prevent infinite loop
-      
-      while (attempts < maxAttempts) {
-        // Generate random position in pixels
-        const left = Math.floor(Math.random() * (maxLeft - minLeft)) + minLeft;
-        const top = Math.floor(Math.random() * (maxTop - minTop)) + minTop;
-        
-        let overlaps = false;
-        
-        // Check against all existing bubbles
-        for (const bubble of existingBubbles) {
-          const bubbleSize = parseInt(bubble.style.width, 10);
-          const bubbleLeft = parseFloat(bubble.style.left) / 100 * containerWidth;
-          const bubbleTop = parseFloat(bubble.style.top) / 100 * containerHeight;
-          
-          if (doCirclesOverlap(left, top, size / 2, bubbleLeft, bubbleTop, bubbleSize / 2)) {
-            overlaps = true;
-            break;
-          }
-        }
-        
-        // If no overlap, return this position
-        if (!overlaps) {
-          return {
-            left: (left / containerWidth) * 100, // Convert back to percentage
-            top: (top / containerHeight) * 100   // Convert back to percentage
-          };
-        }
-        
-        attempts++;
-      }
-      
-      // If we couldn't find a non-overlapping position, return a fallback
-      logDebug("Could not find non-overlapping position after " + maxAttempts + " attempts");
-      return {
-        left: Math.random() * 70 + 15, // Adding more margin to edges
-        top: Math.random() * 70 + 15   // Adding more margin to edges
-      };
-    }
-    
-    /**
-     * Create a bubble with fluid animation
-     */
-    function createBubble(name, isConfirmed = false) {
-      // Randomize bubble size for more natural look
-      const size = Math.floor(Math.random() * 40) + 80; // between 80px and 120px
-      
-      // Find a non-overlapping position
-      const position = findNonOverlappingPosition(size);
-      
-      const bubble = document.createElement("div");
-      bubble.className = "bubble";
-      bubble.setAttribute("data-name", name);
-      
-      // Add confirmed class if needed
-      if (isConfirmed) {
-        bubble.classList.add("confirmed");
-      }
-      
-      // Create and append the text span
-      const textSpan = document.createElement("span");
-      textSpan.className = "bubble-text";
-      textSpan.textContent = name;
-      bubble.appendChild(textSpan);
-      
-      // Set position and size
-      bubble.style.top = position.top + "%";
-      bubble.style.left = position.left + "%";
-      bubble.style.width = size + "px";
-      bubble.style.height = size + "px";
-      
-      // Apply appropriate animation
-      if (isConfirmed) {
-        // Apply simple up/down bobbing animation for confirmed bubbles
-        bubble.style.opacity = "0.5"; // Make it faded
-        bubble.style.animation = "bobUpDown 3s ease-in-out infinite";
-      } else {
-        // Apply full fluid animation for regular bubbles
-        applyCustomAnimation(bubble, size);
-      }
-      
-      // Add to container
-      bubbleContainer.appendChild(bubble);
-      
-      // Add to existing bubbles array for collision detection
-      existingBubbles.push(bubble);
-      
-      return bubble;
-    }
-    
-    /**
-     * Apply animation based on bubble size
-     */
-    function applyCustomAnimation(bubble, size) {
-      // Different animation based on size
-      let animationName;
-      if (size < 95) {
-        animationName = "floatSmall";
-      } else if (size > 115) {
-        animationName = "floatLarge";
-      } else {
-        // For medium size bubbles, pick one of the three variations
-        const variations = ["float1", "float2", "float3"];
-        animationName = variations[Math.floor(Math.random() * variations.length)];
-      }
-      
-      // Random duration between 8 and 15 seconds
-      const duration = (Math.random() * 7 + 8).toFixed(1);
-      
-      // Random delay so bubbles don't all move in sync
-      const delay = (Math.random() * 5).toFixed(1);
-      
-      // Apply the animation with cubic-bezier for more natural movement
-      bubble.style.animation = `${animationName} ${duration}s cubic-bezier(0.45, 0.05, 0.55, 0.95) ${delay}s infinite`;
-    }
-    
-    /**
-     * Mark a bubble as confirmed
-     */
-    function confirmBubble(name) {
-      // Find the bubble with the matching name
-      const bubbles = document.querySelectorAll('.bubble');
-      bubbles.forEach(bubble => {
-        if (bubble.getAttribute("data-name") === name && !bubble.classList.contains("confirmed")) {
-          // Apply popping animation temporarily
-          bubble.style.animation = 'popEffect 0.5s forwards';
-          
-          // After animation completes, add the confirmed class and apply bobbing animation
-          setTimeout(() => {
-            bubble.classList.add("confirmed");
-            bubble.style.opacity = "0.5"; // Make it faded
-            bubble.style.animation = "bobUpDown 3s ease-in-out infinite";
-          }, 500);
-        }
-      });
-    }
-    
-    // ==========================================================================
-    // FORM HANDLING FUNCTIONS
-    // ==========================================================================
-    
-    /**
-     * Open the RSVP modal
-     */
-    function openRsvpModal() {
-      nameInput.value = ""; // Clear the name input
-      modalOverlay.style.display = "flex";
-      rsvpFormContainer.style.display = "block";
-      successMessage.style.display = "none";
-      updateGuestNamesVisibility();
+      requestAnimationFrame(frame);
     }
 
-    /**
-     * Close the modal
-     */
-    function closeModal() {
-      modalOverlay.style.display = "none";
-      // Reset form
-      rsvpForm.reset();
-    }
-    
-    /**
-     * Toggle guest count and names visibility based on attendance selection
-     */
-    function updateGuestNamesVisibility() {
-      const guestCount = parseInt(guestsInput.value, 10);
-      if (guestCount > 1 && (attendingYes.checked || attendingMaybe.checked)) {
-        guestNamesSection.style.display = "block";
-      } else {
-        guestNamesSection.style.display = "none";
-      }
-    }
-    
-    /**
-     * Submit form data using a GET request to avoid CORS issues
-     */
-    function submitFormUsingGet(formData, callback) {
-      // Create URL with query parameters for all form data
-      let url = SCRIPT_URL + "?action=submitRsvp";
-      
-      // Add all form data as query parameters
-      for (const key in formData) {
-        if (formData.hasOwnProperty(key)) {
-          url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(formData[key]);
-        }
-      }
-      
-      // Add timestamp to prevent caching
-      url += "&_=" + Date.now();
-      
-      logDebug("Submitting form via GET request to: " + url);
-      
-      // Use a simple image request to avoid CORS issues
-      // This is a hack, but works reliably across browsers
-      const img = new Image();
-      
-      // Set timeout for the request
-      const timeoutId = setTimeout(() => {
-        logDebug("Form submission timed out");
-        callback(false, "Request timed out");
-      }, 10000);
-      
-      // Set handlers
-      img.onload = function() {
-        clearTimeout(timeoutId);
-        logDebug("Form submitted successfully");
-        callback(true, "Form submitted successfully");
-      };
-      
-      img.onerror = function() {
-        // For Google Apps Script, this will usually still work even though
-        // the image fails to load (since the script processes the request)
-        clearTimeout(timeoutId);
-        logDebug("Form likely submitted (expected image error)");
-        callback(true, "Form likely submitted successfully");
-      };
-      
-      // Begin request
-      img.src = url;
-    }
-    
-    // ==========================================================================
-    // EVENT LISTENERS
-    // ==========================================================================
-    
-    // Open RSVP form when the button is clicked
-    openRsvpBtn.addEventListener("click", openRsvpModal);
-    
-    // Adjust for mobile devices
-    /**
-     * Make necessary adjustments for mobile view
-     */
-    function adjustForMobile() {
-      // Simple adjustments - just set angle smoothing
-      if (window.innerWidth <= 768) {
-        // More responsive turning on mobile
-        angleSmoothing = 0.4;
-      } else {
-        // Desktop smoothing
-        angleSmoothing = 0.2;
-      }
-    }
-    
-    // Run mobile adjustments on load and resize
-    window.addEventListener('resize', adjustForMobile);
-    
-    // Attach close event to the modal's close button
-    document.getElementById("closeModal").addEventListener("click", closeModal);
-    
-    // Toggle guest count and dietary fields based on attendance
-    attendingYes.addEventListener("change", function() {
-      guestsGroup.style.display = "block";
-      dietaryGroup.style.display = "block";
-      updateGuestNamesVisibility();
-    });
-    
-    attendingNo.addEventListener("change", function() {
-      guestsGroup.style.display = "none";
-      dietaryGroup.style.display = "block";
-    });
-    
-    attendingMaybe.addEventListener("change", function() {
-      guestsGroup.style.display = "block";
-      dietaryGroup.style.display = "block";
-      updateGuestNamesVisibility();
-    });
-    
-    // Show/hide guest names field based on number of guests
-    guestsInput.addEventListener("change", updateGuestNamesVisibility);
-    guestsInput.addEventListener("input", updateGuestNamesVisibility);
-    
-    // Handle RSVP form submission
-    rsvpForm.addEventListener("submit", function(e) {
+    // Toggle Form logic
+    function toggleForm(show) { document.getElementById('plankOverlay').classList.toggle('show', show); }
+    document.getElementById('standClickZone').onclick = () => toggleForm(true);
+
+    // Toggle Event Details Panel
+    document.getElementById('detailsHeader').onclick = () => {
+      const c = document.getElementById('detailsContent'); 
+      c.classList.toggle('show');
+      document.getElementById('detailsCaret').textContent = c.classList.contains('show') ? '▲' : '▼';
+    };
+
+    // Replace google.script.run with fetch() for saving form data
+    document.getElementById('rsvpForm').onsubmit = (e) => {
       e.preventDefault();
       
-      // Get the name from the form
-      const name = nameInput.value.trim();
-      
-      // Check if name is provided
-      if (!name) {
-        alert("Please enter your name");
-        return;
+      if (!WEB_APP_URL || WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
+          alert("Oops! You forgot to paste your Web App URL into the Javascript!");
+          return;
       }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true; btn.textContent = "Sending Quack...";
+      const data = Object.fromEntries(new FormData(e.target).entries());
       
-      // Prepare form data
-      const formData = {
-        name: name,
-        email: document.getElementById("emailInput").value.trim(),
-        phone: document.getElementById("phoneInput").value.trim(),
-        attending: document.querySelector('input[name="attending"]:checked').value,
-        guests: document.getElementById("guestsInput").value,
-        guestNames: document.getElementById("guestNamesInput").value.trim(),
-        dietary: document.getElementById("dietaryInput").value.trim(),
-        comments: document.getElementById("commentsInput").value.trim()
-      };
-      
-      logDebug("Submitting RSVP for: " + name);
-      
-      // Show saving indicator
-      const submitBtn = rsvpForm.querySelector('button[type="submit"]');
-      const originalBtnText = submitBtn.textContent;
-      submitBtn.textContent = "Saving...";
-      submitBtn.disabled = true;
-      
-      // Use GET request with action=submitRsvp instead of POST
-      // This works because GET requests don't trigger CORS preflight
-      submitFormUsingGet(formData, function(success, message) {
-        // Reset button
-        submitBtn.textContent = originalBtnText;
-        submitBtn.disabled = false;
-        
-        if (success) {
-          logDebug("RSVP saved successfully for: " + name);
-          
-          // Show success message
-          rsvpFormContainer.style.display = "none";
-          successMessage.style.display = "block";
-          
-          // Create a new bubble with the person's name (if they're attending)
-          if (formData.attending === "Y") {
-            // Check if this person already has a bubble
-            let hasBubble = false;
-            document.querySelectorAll('.bubble').forEach(bubble => {
-              if (bubble.getAttribute("data-name") === name) {
-                hasBubble = true;
-              }
-            });
-            
-            // Only create a new bubble if they don't already have one
-            if (!hasBubble) {
-              createBubble(name, false);
-            }
-          }
-          
-          // Close modal after a delay
-          setTimeout(() => {
-            closeModal();
-            
-            // Refresh RSVPs to show the new submission
-            loadExistingRsvps();
-          }, 3000);
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        // Note: sending as plain text to avoid complex CORS preflight issues
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(result => {
+        if(result.status === 'success') {
+          isGreeting = true; 
+          document.getElementById('lsSpeechText').textContent = `Welcome, ${data.name}!`; 
+          document.getElementById('lsSpeech').classList.remove('hidden');
+          if (data.attending !== 'N') spawnDuck(data.name, true);
+          toggleForm(false);
+          e.target.reset(); 
+          btn.disabled = false; btn.textContent = "Submit RSVP (Quack!)";
+          setTimeout(() => { isGreeting = false; document.getElementById('lsSpeech').classList.add('hidden'); }, 15000);
         } else {
-          logDebug("Error saving RSVP: " + message);
-          alert("Error saving RSVP: " + message);
-          console.error("RSVP submission error:", message);
+          throw new Error(result.message);
         }
-      });
-    });
-    
-    // ==========================================================================
-    // INITIALIZATION
-    // ==========================================================================
-    
-    // When the page loads, initialize everything
-    window.onload = function() {
-      logDebug("Application initializing...");
+      })
+      .catch((err) => { 
+        console.error(err);
+        btn.disabled = false; btn.textContent = "Error!"; 
+      }); 
+    };
+
+    window.onload = () => {
+      // Audio unlocker
+      document.body.addEventListener('click', function unlockAudio() {
+        quack.volume = 0; 
+        quack.play().then(() => {
+            quack.pause();
+            quack.currentTime = 0;
+            quack.volume = 0.4; 
+        }).catch(() => {});
+        document.body.removeEventListener('click', unlockAudio);
+      }, { once: true });
+
+      // Populate Event Details
+      document.getElementById('event-title').textContent = "Callie's Duck Pond Party";
+      document.getElementById('event-date').textContent = "Saturday, April 26 @ 1:00 PM";
+      document.getElementById('event-location').textContent = "Crescent Park";
+      document.getElementById('event-desc').textContent = "Join us for a quacking good time! We'll have bubbles, snacks, and drinks.";
+      document.getElementById('event-location-details').textContent = "340 Crescent Ave in Wyoming Ohio. Access via Wyoming Ave for parking.";
+      document.getElementById('gifts-details').textContent = "Pink, Ducks, Stickers, size 3T.";
+
+      startSpeechLoop();
+      startGlideLoop();
+      startQuackLoop();
       
-      // Make sure we adjust for mobile before starting animations
-      adjustForMobile();
-      
-      // Start the SVG path animation
-      requestAnimationFrame(animate);
-      
-      // Start bubble generation - both movement-based and automatic
-      requestAnimationFrame(updateNarwhalBubbles);
-      startAutoBubbles(); // Start periodic bubble generation
-      
-      // Load event details from Apps Script
-      loadEventDetails();
-      
-      // Setup event details toggle
-      setupEventDetailsToggle();
-      
-      // Apply mobile-specific adjustments
-      adjustForMobile();
-      
-      // Add empty decoration bubbles
-      for (let i = 0; i < 8; i++) {
-        const size = Math.floor(Math.random() * 30) + 70; // between 70px and 100px
-        const position = findNonOverlappingPosition(size);
-        
-        const emptyBubble = document.createElement("div");
-        emptyBubble.className = "bubble";
-        emptyBubble.setAttribute("data-permanent", "true"); // Mark as permanent decoration
-        emptyBubble.style.top = position.top + "%";
-        emptyBubble.style.left = position.left + "%";
-        emptyBubble.style.width = size + "px";
-        emptyBubble.style.height = size + "px";
-        
-        // Make empty bubbles more transparent
-        emptyBubble.style.opacity = "0.6";
-        
-        // Apply custom animation
-        applyCustomAnimation(emptyBubble, size);
-        
-        bubbleContainer.appendChild(emptyBubble);
-        existingBubbles.push(emptyBubble);
+      // Auto-open form on mobile
+      if (window.innerWidth <= 768) {
+        toggleForm(true);
       }
-      
-      // Load existing RSVPs from Apps Script
-      loadExistingRsvps();
-      
-      // Start the periodic check for confirmed RSVPs
-      checkForConfirmedRsvps();
-      setInterval(checkForConfirmedRsvps, 60000); // Check every minute
-      
-      logDebug("Initialization complete");
+
+      // Load initial data via Fetch instead of google.script.run
+      if (WEB_APP_URL && WEB_APP_URL !== "YOUR_WEB_APP_URL_HERE") {
+        
+        // Fetch audio
+        fetch(`${WEB_APP_URL}?action=getQuackSound`)
+          .then(res => res.json())
+          .then(data => { if(data.audio) preloadedQuackAudio = data.audio; })
+          .catch(err => console.error("Failed to load audio", err));
+
+        // Fetch existing guests
+        fetch(`${WEB_APP_URL}?action=getExistingRsvps`)
+          .then(res => res.json())
+          .then(guests => {
+            if (guests) guests.forEach(g => { if (g && g.name) spawnDuck(g.name, false); });
+          })
+          .catch(err => console.error("Failed to load guests", err));
+      }
     };
   </script>
 </body>
