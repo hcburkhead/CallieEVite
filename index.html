@@ -1,479 +1,586 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Duck Pond RSVP Evite</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Callie's Duck Pond Party</title>
+
   <style>
-    /* Basic styling */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      text-align: center;
-      overflow-x: hidden;
-      margin: 0;
-      padding: 0;
-      background-color: #f0f8ff;
+    :root {
+      --ui-green: #2c5f2d;
+      --panel-blue: #0288d1;
+      --btn-orange: #ff9800;
+      --shadow: rgba(0,0,0,0.18);
+      --wood-pattern: url('https://i.imgur.com/wLF80aZ.png');
     }
-    h1 {
-      margin-top: 20px;
-      color: #2c5f2d;
-      position: relative;
-      z-index: 10;
-      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+
+    body { 
+      margin:0; font-family: 'Segoe UI', sans-serif; background:#bfe9ff; text-align:center; overflow-x:hidden; 
+      display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh;
     }
-    
-    .page-wrapper {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 15px;
-      box-sizing: border-box;
-    }
-    
-    /* Pond Container */
+    h1 { margin: 0 0 14px; color: var(--ui-green); text-shadow: 1px 1px 2px rgba(255,255,255,0.8); }
+    .page-wrapper { width: 100%; max-width: 1200px; padding: 0 14px 20px; box-sizing: border-box; }
+
+    /* Event Panel Styles */
+    .event-details-panel { width: 95%; max-width: 640px; margin: 0 auto 16px; background: white; border-radius: 10px; box-shadow: 0 4px 8px var(--shadow); overflow: hidden; z-index: 40; position: relative; }
+    .event-details-panel h3 { background: var(--panel-blue); color: white; margin:0; padding: 10px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; }
+    .event-details-content { padding: 14px 16px; display:none; text-align:left; line-height: 1.5; font-size: 0.95rem; }
+    .event-details-content.show { display:block; }
+    .event-details-content h2 { margin-top: 0; color: var(--ui-green); font-size: 1.3rem; margin-bottom: 8px;}
+    .event-details-content p { margin: 8px 0; }
+    #event-location-details { font-size: 0.9em; color: #444; background: #f0f8ff; padding: 8px; border-radius: 6px; }
+
     .container {
-      position: relative;
-      width: 95%; 
-      height: 75vh;
-      margin: 0 auto 20px;
-      background-color: #a3d5ff; /* Pond water color */
-      background-image: radial-gradient(circle at 50% 50%, #bde0ff 0%, #a3d5ff 60%, #80c0ff 100%);
-      border-radius: 15px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      border: 4px solid #fff;
-      overflow: hidden;
-    }
-    
-    /* SVG Path for debugging (invisible) */
-    svg.debug-path {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      z-index: 1;
-    }
-    
-    /* --- MAIN DUCK STYLING --- */
-    .duck-container {
-      position: absolute;
-      width: 140px;
-      height: 140px;
-      transform: translate(-50%, -50%); /* Centering logic handled in JS */
-      z-index: 20;
-      pointer-events: none;
-      filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.2));
-    }
-    
-    /* SVG Parts Styling */
-    .duck-svg {
-      width: 100%;
-      height: 100%;
-      overflow: visible;
-    }
-    
-    .duck-body { fill: #FFC107; }
-    .duck-wing { fill: #FFD54F; }
-    .duck-head { fill: #FFC107; }
-    .duck-eye-white { fill: #FFF; }
-    .duck-eye-pupil { fill: #000; }
-    .duck-beak { fill: #FF5722; }
-    
-    /* Beak Animation */
-    .beak-bottom {
-      transform-origin: 10px 0px; /* Pivot around the corner of the mouth */
-      transition: transform 0.1s;
-    }
-    
-    /* Class to trigger Quack */
-    .duck-container.quacking .beak-bottom {
-      animation: quackAction 0.4s infinite alternate;
-    }
-    
-    @keyframes quackAction {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(25deg); } /* Open mouth */
+      position: relative; width: 100%; max-width: 1200px; aspect-ratio: 1200 / 700; height: auto;
+      margin: 0 auto; border-radius: 14px; border: 4px solid #fff;
+      box-shadow: 0 8px 18px var(--shadow); overflow: hidden;
+      background: #bfe9ff;
     }
 
-    /* --- DUCKLING (RSVP) STYLING --- */
-    .duckling {
-      position: absolute;
-      width: 60px;
-      height: 60px;
-      z-index: 10;
-      cursor: pointer;
-      transition: transform 0.5s ease-in-out;
-      filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.2));
+    #sceneCamera {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      background: url("https://i.imgur.com/gTPIqeZ.png") center/cover;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    svg#sceneSvg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index: 2; }
+
+    #lemonadeStand { position:absolute; left: 2.2%; bottom: 3%; width: 30%; z-index: 6; }
+    #lsDuck { position:absolute; left: 8.6%; bottom: 30%; width: 10%; z-index: 5; transform-origin: 50% 80%; animation: lsWiggle 1.8s ease-in-out infinite; }
+    #standClickZone { position:absolute; left: 2.2%; bottom: 10%; width: 30%; height: 30%; z-index: 20; cursor: pointer; }
+
+    @keyframes lsWiggle { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+
+    .duckling { 
+      position:absolute; width: 70px; height: 70px; z-index: 8; pointer-events: auto; 
     }
     
-    .duckling:hover {
-      transform: scale(1.2) !important; /* Pop up on hover */
-      z-index: 30;
+    .duck-float-wrap { 
+      position: absolute; inset: -20px; 
+      animation: subtleFloat 3.5s ease-in-out infinite; 
     }
     
-    .duckling-name {
-      position: absolute;
-      top: -25px;
-      left: 50%;
+    .duckling img { 
+      position: absolute; top: 20px; left: 20px;
+      width: calc(100% - 40px); height: calc(100% - 40px); 
+      display: block; 
+    }
+    .duckling.floating img { clip-path: inset(0 0 22% 0); }
+    
+    .duckling.callie-vip .duck-float-wrap {
+      -webkit-filter: drop-shadow(0 0 6px rgba(255, 105, 180, 0.9)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
+      filter: drop-shadow(0 0 6px rgba(255, 105, 180, 0.9)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
+    }
+
+    .duck-open { opacity: 0; }
+
+    .duckling-name { 
+      position:absolute; top:-4px; left:50%; 
+      background: white; padding: 2px 6px; border-radius: 4px; 
+      font-size: 10px; font-weight: 700; opacity: 0; 
+      transition: opacity 0.2s; 
+      white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+      pointer-events: none;
       transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.85);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: bold;
-      color: #333;
-      white-space: nowrap;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.3s;
     }
+    .duckling:hover .duckling-name { opacity: 1; }
     
-    .duckling:hover .duckling-name {
-      opacity: 1;
-    }
-
-    /* Variant colors for ducklings */
-    .duckling.confirmed .duck-body, 
-    .duckling.confirmed .duck-head { fill: #81C784; } /* Greenish for yes */
-    .duckling.confirmed .duck-wing { fill: #A5D6A7; }
+    @keyframes subtleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
     
-    .duckling.maybe .duck-body,
-    .duckling.maybe .duck-head { fill: #FFD54F; } /* Lighter yellow */
-    
-    /* Animation for floating ducklings */
-    @keyframes bobbing {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
-    }
-    
-    /* UI Buttons */
-    #openRsvpBtn {
+    .bubble {
       position: absolute;
-      top: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      background-color: #ff9800;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: bold;
-      z-index: 100;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-    #openRsvpBtn:hover { background-color: #e68900; transform: scale(1.05); }
-    
-    /* Ripples */
-    .ripple {
-      position: absolute;
-      border: 2px solid rgba(255, 255, 255, 0.5);
       border-radius: 50%;
       pointer-events: none;
-      z-index: 5;
-      transform: scale(0.5);
-      opacity: 1;
-      animation: rippleExpand 2s forwards;
-    }
-    @keyframes rippleExpand {
-      to { transform: scale(2.5); opacity: 0; }
+      animation: floatBubble 1.5s ease-in forwards;
+      z-index: 10;
     }
 
-    /* Details Panel (Collapsed by default) */
-    .event-details-panel {
-      position: relative;
-      width: 95%;
-      max-width: 600px;
-      margin: 0 auto 20px;
-      background-color: rgba(255, 255, 255, 0.95);
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      z-index: 50;
-      overflow: hidden;
+    .spectral-bubble {
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 105, 180, 0.5));
+      border: 1.5px solid rgba(255, 150, 200, 1);
+      box-shadow: 0 0 12px 2px rgba(255, 105, 180, 0.9), inset 0 0 6px rgba(255, 255, 255, 0.8);
     }
-    .event-details-panel h3 {
-      background-color: #0288d1;
-      color: white;
-      margin: 0;
-      padding: 10px 15px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
+
+    @keyframes floatBubble {
+      0% { transform: translate(0, 0) scale(0.5); opacity: 1; filter: brightness(1.2); }
+      50% { transform: translate(0, -25px) scale(1.2); opacity: 0.9; filter: brightness(1.4); }
+      100% { transform: translate(0, -50px) scale(1.5); opacity: 0; filter: brightness(1); }
     }
-    .event-details-content {
-      padding: 15px;
-      display: none; /* Hidden by default */
+
+    #lsSpeech { 
+      position: absolute; left: 14%; bottom: 45%; z-index: 9; 
+      padding: 1.5% 2.5%; background: white; border-radius: 14px; 
+      font-weight: 800; font-size: clamp(10px, 1.8vw, 16px);
+      box-shadow: 0 4px 10px var(--shadow); transition: opacity 0.3s; 
     }
-    .event-details-content.show { display: block; }
+    #lsSpeech.hidden { opacity: 0; pointer-events: none; }
+    #lsSpeech::after { content:""; position:absolute; left: 15%; bottom: -10px; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 10px solid white; }
+
+    #plankOverlay { 
+      position: fixed; inset: 0; display: none; justify-content: center; align-items: center; 
+      z-index: 2000; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); 
+    }
+    #plankOverlay.show { display: flex; }
     
-    /* Modal */
-    #modalOverlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      justify-content: center; align-items: center;
-      z-index: 1000;
+    #plankPanel { 
+      width: 92%; max-width: 650px; max-height: 90vh; overflow-y: auto;
+      background-image: var(--wood-pattern); background-size: cover; 
+      border: 5px solid #3e2723; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
     }
-    #modalContent {
-      background: white; padding: 20px; border-radius: 8px; width: 400px; max-width: 90%; max-height: 90vh; overflow-y: auto; text-align: left; position: relative;
-    }
-    #rsvpForm input, #rsvpForm textarea { width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box; }
-    button[type="submit"] { background-color: #0288d1; color: white; padding: 10px; border: none; width: 100%; cursor: pointer; }
     
+    #plankHeader { 
+      display: flex; justify-content: space-between; align-items: center; 
+      padding: 10px 20px; background: rgba(0,0,0,0.8); color: #fff; font-weight: 900; 
+    }
+    
+    #rsvpForm { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px; text-align: left; }
+    .full { grid-column: 1 / -1; }
+    label { color: white; font-weight: 800; text-shadow: 1px 1px 2px #000; margin-bottom: 2px; display: block; }
+    input, textarea, select { width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #3e2723; box-sizing: border-box; font-size: 16px; }
+    
+    #submitBtn { 
+      background: var(--btn-orange); color: white; font-weight: 900; font-size: 16px; 
+      border: none; padding: 14px; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: filter 0.2s; 
+    }
+    #submitBtn:hover { filter: brightness(1.1); }
+
+    @media (max-width: 768px) {
+      .duckling { width: 30px; height: 30px; }
+      
+      #plankOverlay { background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); }
+      #plankPanel { 
+        width: 100%; height: 100%; max-width: none; max-height: none; 
+        border: none; border-radius: 0; 
+        display: flex; flex-direction: column; 
+      }
+      #plankHeader { padding: 15px 20px; font-size: 1.2rem; }
+      #rsvpForm { grid-template-columns: 1fr; gap: 12px; padding: 20px; overflow-y: auto; }
+      input, textarea, select { padding: 12px; font-size: 16px; } 
+    }
   </style>
 </head>
+
 <body>
   <div class="page-wrapper">
-    <button id="openRsvpBtn">RSVP Now</button>
-    
-    <h1>The Duck Pond Party</h1>
-    
+    <h1>Callie's Duck Party</h1>
+    <!-- <h3><strong><i>I'm turning 3!</i></strong></h3> -->
+
     <div class="event-details-panel">
-      <h3 onclick="toggleDetails()">Event Details <span>▼</span></h3>
+      <h3 id="detailsHeader">Click for Event Details <span id="detailsCaret">▼</span></h3>
       <div class="event-details-content" id="detailsContent">
-        <p><strong>Date:</strong> Saturday, April 26, 2026</p>
-        <p><strong>Time:</strong> 12:00 PM - 2:00 PM</p>
-        <p><strong>Location:</strong> The Park Pond</p>
-        <p><strong>Info:</strong> Join us for a waddling good time!</p>
+        <h2 id="event-title"></h2>
+        <p id="event-desc"></p>
+        <p><strong>When:</strong> <span id="event-date"></span></p>
+        <p><strong>Where:</strong> <span id="event-location"></span></p>
+        <p id="event-location-details"></p>
+        <p><strong>🎁 Gift Ideas:</strong> <span id="gifts-details"></span></p>
       </div>
     </div>
-    
-    <div class="container" id="pondContainer">
-      <svg class="debug-path">
-        <path id="motionPath" d="M -100 200 
-                                 C 50 200, 150 400, 300 400 
-                                 S 500 100, 700 200 
-                                 S 900 500, 1100 400 
-                                 S 1300 200, 1400 300" 
-              fill="none" stroke="rgba(255,255,255,0.2)"></path>
-      </svg>
-      
-      <div class="duck-container" id="mainDuck">
-        <svg viewBox="0 0 100 100" class="duck-svg">
-          <ellipse cx="50" cy="65" rx="35" ry="20" class="duck-body" />
-          <path d="M 15 55 Q 5 45 15 35 L 30 55 Z" class="duck-body" />
-          <ellipse cx="50" cy="65" rx="15" ry="8" class="duck-wing" transform="rotate(-10 50 65)" />
-          <circle cx="70" cy="35" r="18" class="duck-head" />
-          <circle cx="75" cy="30" r="3" class="duck-eye-white" />
-          <circle cx="76" cy="30" r="1" class="duck-eye-pupil" />
-          
-          <g transform="translate(85, 35)">
-            <path d="M 0 -2 L 12 0 L 0 2 Z" class="duck-beak" />
-            <path d="M 0 2 L 10 4 L 0 4 Z" class="duck-beak beak-bottom" />
-          </g>
-        </svg>
-      </div>
-      
-      </div>
-  </div>
-  
-  <div id="modalOverlay">
-    <div id="modalContent">
-      <span onclick="closeModal()" style="position:absolute;top:10px;right:10px;cursor:pointer;font-size:20px;">×</span>
-      <h2>RSVP</h2>
-      <form id="rsvpForm">
-        <label>Name</label>
-        <input type="text" id="nameInput" name="name" required>
-        
-        <label>Attending?</label>
-        <div style="margin-bottom:10px;">
-          <input type="radio" name="attending" value="Y" checked> Yes
-          <input type="radio" name="attending" value="N"> No
-          <input type="radio" name="attending" value="Maybe"> Maybe
-        </div>
 
-        <label>Guests</label>
-        <input type="number" name="guests" value="1" min="1">
+    <div class="container" id="pondContainer">
+      <div id="sceneCamera">
+        <svg id="sceneSvg" viewBox="0 0 1200 700" preserveAspectRatio="none">
+          <path id="duckPath" d="M 220 620 Q 350 640, 480 580" fill="none" stroke="transparent" />
+        </svg>
         
-        <label>Comments</label>
-        <textarea name="comments"></textarea>
+        <img id="lsDuck" src="https://i.imgur.com/DAZiu3E.png" />
+        <img id="lemonadeStand" src="https://i.imgur.com/IwdHsys.png" />
+        <div id="standClickZone"></div>
         
-        <button type="submit">Submit (Quack!)</button>
+        <div id="lsSpeech" class="hidden"><span id="lsSpeechText"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="plankOverlay">
+    <div id="plankPanel">
+      <div id="plankHeader">
+        <span>RSVP ON THE PLANK</span>
+        <button type="button" onclick="toggleForm(false)" style="background:red; color:white; border:none; cursor:pointer; padding:4px 12px; border-radius:4px; font-weight:bold; font-size:16px;">✕</button>
+      </div>
+      <form id="rsvpForm">
+        <div><label>Your Name</label><input name="name" type="text" required /></div>
+        <div><label>Email</label><input name="email" type="email" required /></div>
+        <div><label>Phone</label><input name="phone" type="tel" /></div>
+        <div><label>Guests</label><input name="guests" type="number" value="1" min="1" /></div>
+        <div class="full"><label>Attending?</label>
+          <select name="attending"><option value="Y">Yes!</option><option value="Maybe">Maybe</option><option value="N">No</option></select>
+        </div>
+        <div class="full"><label>Comments</label><textarea name="comments" rows="2"></textarea></div>
+        <button id="submitBtn" class="full" type="submit">Submit RSVP (Quack!)</button>
       </form>
     </div>
   </div>
 
+  <audio id="quackSound" src="https://www.soundjay.com/nature/sounds/duck-quack-1.mp3" preload="auto"></audio>
+
   <script>
-    /* --- CONFIG & STATE --- */
+    const ASSETS = {
+      LS_CLOSED: "https://i.imgur.com/DAZiu3E.png", 
+      LS_OPEN: "https://i.imgur.com/nl9v3EX.png",
+      DUCK_COLORS: [
+        { closed: "https://i.imgur.com/nAZgAiF.png", open: "https://i.imgur.com/gBq1hUM.png" }, 
+        { closed: "https://i.imgur.com/NEKUFdH.png", open: "https://i.imgur.com/MqP6SxY.png" }, 
+        { closed: "https://i.imgur.com/ahPfxOt.png", open: "https://i.imgur.com/xjPuiBL.png" }, 
+        { closed: "https://i.imgur.com/2iJeMEl.png", open: "https://i.imgur.com/SqF7pwb.png" } 
+      ]
+    };
+
+    let isGreeting = false;
+    let preloadedQuackAudio = null; 
+    let duckCount = 0; 
+    let callieSpawned = false; 
+    const pondDuckEls = [];
+
     const pond = document.getElementById('pondContainer');
-    const mainDuck = document.getElementById('mainDuck');
-    const path = document.getElementById('motionPath');
-    
-    // Animation State
-    let progress = 0;
-    let direction = 1; // 1 = forward, -1 = backward
-    let lastTime = 0;
-    const speed = 0.00003; // Speed of the main duck
-    
-    /* --- MAIN DUCK ANIMATION LOOP --- */
-    function animateDuck(timestamp) {
-      if (!lastTime) lastTime = timestamp;
-      const dt = timestamp - lastTime;
-      lastTime = timestamp;
-      
-      progress += direction * speed * dt;
-      
-      // Reverse at ends
-      if (progress >= 1) { progress = 1; direction = -1; }
-      if (progress <= 0) { progress = 0; direction = 1; }
-      
-      // Get position
-      const len = path.getTotalLength();
-      const point = path.getPointAtLength(progress * len);
-      
-      // Calculate Rotation (Angle)
-      // Look slightly ahead or behind to determine tangent
-      const lookAhead = 10;
-      let nextPoint;
-      if (direction === 1) {
-         nextPoint = path.getPointAtLength(Math.min(len, progress * len + lookAhead));
-      } else {
-         nextPoint = path.getPointAtLength(Math.max(0, progress * len - lookAhead));
+    const cameraEl = document.getElementById('sceneCamera');
+    const quack = document.getElementById('quackSound');
+
+    const POND_WATER = { cx: 780, cy: 510, rx: 280, ry: 85, margin: 0.85 };
+    const DUCK_MIN_DIST = 70; 
+
+    function inPondWater(x, y) {
+      if (x < 500) return false;
+      const dx = x - POND_WATER.cx, dy = y - POND_WATER.cy;
+      const nx = dx / POND_WATER.rx, ny = dy / POND_WATER.ry;
+      return (nx * nx + ny * ny) <= (POND_WATER.margin * POND_WATER.margin);
+    }
+
+    function getNextPondSlot() {
+      for (let tries = 0; tries < 500; tries++) {
+        const candidate = {
+          x: POND_WATER.cx + (Math.random() * 2 - 1) * POND_WATER.rx,
+          y: POND_WATER.cy + (Math.random() * 2 - 1) * POND_WATER.ry
+        };
+        if (!inPondWater(candidate.x, candidate.y)) continue;
+        let tooClose = false;
+        for (const el of pondDuckEls) {
+          const sx = Number(el.dataset.slotX || 0), sy = Number(el.dataset.slotY || 0);
+          const dist = Math.sqrt((candidate.x-sx)**2 + (candidate.y-sy)**2);
+          if (sx && sy && dist < DUCK_MIN_DIST) { tooClose = true; break; }
+        }
+        if (!tooClose) return candidate;
       }
-      
-      // Angle in radians
-      let angle = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x);
-      let degrees = angle * (180 / Math.PI);
-      
-      // If moving backwards, we want to flip the duck so it doesn't swim tail-first
-      // We flip using ScaleX. 
-      // Note: SVG rotation origin is top-left by default, we use center.
-      
-      let scaleX = 1;
-      if (direction === -1) {
-        scaleX = -1; 
-        degrees = degrees + 180; // Correct rotation for flip
+      return { x: POND_WATER.cx, y: POND_WATER.cy };
+    }
+
+    function setDuckTransform(d, lookX, extra = "") {
+      d.style.transform = `translate(-50%, -50%) scaleX(${lookX}) ${extra}`;
+      const namePlate = d.querySelector('.duckling-name');
+      if (namePlate) {
+        namePlate.style.transform = `translateX(-50%) scaleX(${lookX})`;
       }
+    }
+
+    async function startSpeechLoop() {
+      const line = "Got any grapes?";
+      while(true) {
+        if (isGreeting) { await new Promise(r => setTimeout(r, 1000)); continue; }
+        document.getElementById('lsSpeechText').textContent = ""; 
+        document.getElementById('lsSpeech').classList.remove('hidden');
+        for (let i = 0; i < line.length; i++) {
+          if (isGreeting) break;
+          document.getElementById('lsSpeechText').textContent += line[i];
+          document.getElementById('lsDuck').src = (i % 2 === 0) ? ASSETS.LS_OPEN : ASSETS.LS_CLOSED;
+          await new Promise(r => setTimeout(r, 90));
+        }
+        document.getElementById('lsDuck').src = ASSETS.LS_CLOSED;
+        await new Promise(r => setTimeout(r, 3500));
+        if (!isGreeting) document.getElementById('lsSpeech').classList.add('hidden');
+        await new Promise(r => setTimeout(r, 15000));
+      }
+    }
+
+    function startQuackLoop() {
+      setInterval(() => {
+        const readyDucks = pondDuckEls.filter(el => el.classList.contains('floating'));
+        if (readyDucks.length === 0) return;
+        const luckyDuck = readyDucks[Math.floor(Math.random() * readyDucks.length)];
+        triggerDuckQuack(luckyDuck);
+      }, 30000);
+    }
+
+    function triggerDuckQuack(d) {
+      const imgClosed = d.querySelector('.duck-closed');
+      const imgOpen = d.querySelector('.duck-open');
+      if (!imgClosed || !imgOpen) return;
       
-      mainDuck.style.left = point.x + 'px';
-      mainDuck.style.top = point.y + 'px';
-      // Apply rotation and flip. We add rotate(0) to initial state
-      mainDuck.style.transform = `translate(-50%, -50%) rotate(${degrees}deg) scaleX(${direction})`;
-      
-      // Create random ripples
-      if (Math.random() < 0.05) createRipple(point.x, point.y + 20); // +20 to be under duck
-      
-      // Random Quacking (Mouth Animation)
-      if (Math.random() < 0.01) {
-        startQuacking();
+      let open = false;
+      const qInt = setInterval(() => { 
+        open = !open; 
+        imgClosed.style.opacity = open ? '0' : '1';
+        imgOpen.style.opacity = open ? '1' : '0';
+      }, 150);
+
+      if (d.classList.contains('callie-vip')) {
+        const transformStr = d.style.transform || "";
+        const match = transformStr.match(/scaleX\(([^)]+)\)/);
+        const lookX = match ? parseFloat(match[1]) : 1; 
+        const dir = -lookX;
+
+        const isMobile = window.innerWidth <= 768;
+        const duckBaseSize_px = isMobile ? 30 : 70; 
+
+        const beakOffset_px = (duckBaseSize_px / 2) * dir;
+        const spawnOffsetX_px = beakOffset_px + (15 * dir);
+        const spawnOffsetY_px = -5 * (isMobile ? 0.5 : 1); 
+
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble spectral-bubble';
+            
+            const sizeMin = isMobile ? 3 : 6;
+            const sizeMax = isMobile ? 6 : 12;
+            const size = sizeMin + Math.random() * (sizeMax - sizeMin);
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            
+            const randomSpread = isMobile ? 3 : 5;
+            const randomSpreadX = (Math.random() * 2 - 1) * randomSpread; 
+            const randomSpreadY = (Math.random() * 2 - 1) * randomSpread; 
+
+            const finalSpawnX_px = parseFloat(d.style.left) + spawnOffsetX_px + randomSpreadX;
+            const finalSpawnY_px = parseFloat(d.style.top) + spawnOffsetY_px + randomSpreadY;
+
+            bubble.style.left = finalSpawnX_px + 'px';
+            bubble.style.top = finalSpawnY_px + 'px';
+            bubble.style.zIndex = Math.floor(finalSpawnY_px);
+            
+            cameraEl.appendChild(bubble);
+            setTimeout(() => bubble.remove(), 1500); 
+          }, i * 350); 
+        }
       }
 
-      requestAnimationFrame(animateDuck);
-    }
-    
-    requestAnimationFrame(animateDuck);
+      let audio = preloadedQuackAudio ? new Audio(preloadedQuackAudio) : quack.cloneNode(); 
+      audio.volume = 0.4; 
+      audio.play().catch(e=>{});
 
-    /* --- QUACKING LOGIC --- */
-    function startQuacking() {
-      mainDuck.classList.add('quacking');
-      // Stop quacking after 2 seconds
-      setTimeout(() => {
-        mainDuck.classList.remove('quacking');
-      }, 2000);
-    }
-    
-    function createRipple(x, y) {
-      const r = document.createElement('div');
-      r.className = 'ripple';
-      r.style.left = x + 'px';
-      r.style.top = y + 'px';
-      r.style.width = '40px';
-      r.style.height = '10px'; // Elliptical ripple
-      pond.appendChild(r);
-      setTimeout(() => r.remove(), 2000);
+      setTimeout(() => { 
+        clearInterval(qInt); 
+        imgClosed.style.opacity = '1';
+        imgOpen.style.opacity = '0';
+      }, 1500);
     }
 
-    /* --- DUCKLING GENERATION (RSVPS) --- */
-    // Template for a duckling SVG (lighter weight)
-    function getDucklingSVG() {
-        return `
-        <svg viewBox="0 0 100 100" class="duck-svg">
-          <ellipse cx="50" cy="65" rx="30" ry="18" class="duck-body" />
-          <circle cx="70" cy="40" r="15" class="duck-head" />
-          <circle cx="74" cy="36" r="2" class="duck-eye-pupil" />
-          <path d="M 80 40 L 90 38 L 90 44 Z" class="duck-beak" />
-          <ellipse cx="50" cy="65" rx="12" ry="6" class="duck-wing" />
-        </svg>`;
+    function startGlideLoop() {
+      setInterval(() => {
+        pondDuckEls.forEach((d) => {
+          if (!d.classList.contains('floating') || d.dataset.isGliding === "true") return;
+          if (Math.random() > 0.6) return;
+          setTimeout(() => glideDuckToNewSpot(d), Math.random() * 3000);
+        });
+      }, 10000);
     }
 
-    function createDuckling(name, status) {
+    function glideDuckToNewSpot(d) {
+      const newSlot1200 = getNextPondSlot();
+      const pondW = pond.clientWidth || 1200, pondH = pond.clientHeight || 700;
+      const targetX = newSlot1200.x * (pondW / 1200), targetY = newSlot1200.y * (pondH / 700);
+      const currentX = parseFloat(d.style.left);
+      
+      d.dataset.isGliding = "true";
+      d.dataset.slotX = newSlot1200.x; d.dataset.slotY = newSlot1200.y;
+
+      const lookDir = targetX > currentX ? -1 : 1;
+      setDuckTransform(d, lookDir, "scale(0.85)");
+
+      const startTime = performance.now();
+      const duration = 4000 + Math.random() * 2500;
+      const startX = currentX, startY = parseFloat(d.style.top);
+
+      function move(now) {
+        const elapsed = now - startTime;
+        const ease = Math.min(elapsed / duration, 1); 
+        const curX = startX + (targetX - startX) * ease, curY = startY + (targetY - startY) * ease;
+        d.style.left = curX + 'px'; d.style.top = curY + 'px'; d.style.zIndex = Math.floor(curY);
+        if (ease < 1) requestAnimationFrame(move);
+        else d.dataset.isGliding = "false";
+      }
+      requestAnimationFrame(move);
+    }
+
+    function spawnDuck(name, isNew = false) {
+      const safeName = (name || "Guest").trim();
+      const isCallie = safeName.toLowerCase() === 'callie';
+      
+      if (isCallie) {
+        if (callieSpawned) return; 
+        callieSpawned = true;
+      }
+
+      const path = document.getElementById('duckPath');
       const d = document.createElement('div');
       d.className = 'duckling';
-      if (status === 'Confirmed') d.classList.add('confirmed');
-      if (status === 'Maybe') d.classList.add('maybe');
       
-      d.innerHTML = getDucklingSVG() + `<div class="duckling-name">${name}</div>`;
+      if (isCallie) d.classList.add('callie-vip');
+
+      const myIndex = duckCount++;
       
-      // Random Position
-      const x = Math.random() * (pond.clientWidth - 50);
-      const y = Math.random() * (pond.clientHeight - 50);
+      let closedImg, openImg;
+      if (isCallie) {
+        closedImg = "https://i.imgur.com/mdrOVli.png";
+        openImg = "https://i.imgur.com/PUuv6EM.png";
+      } else {
+        const col = ASSETS.DUCK_COLORS[myIndex % ASSETS.DUCK_COLORS.length];
+        closedImg = col.closed; openImg = col.open;
+      }
+
+      d.innerHTML = `
+        <div class="duck-float-wrap">
+          <img class="duck-closed" src="${closedImg}">
+          <img class="duck-open" src="${openImg}">
+          <div class="duckling-name">${safeName}</div>
+        </div>
+      `;
       
-      d.style.left = x + 'px';
-      d.style.top = y + 'px';
+      cameraEl.appendChild(d);
       
-      // Random float animation delay
-      d.style.animation = `bobbing ${2 + Math.random()}s infinite ease-in-out ${Math.random()}s`;
+      const pondW = pond.clientWidth || 1200, pondH = pond.clientHeight || 700;
+      const slot1200 = getNextPondSlot();
+      const slot = { x: slot1200.x * (pondW / 1200), y: slot1200.y * (pondH / 700) };
+
+      d.dataset.slotX = slot1200.x; d.dataset.slotY = slot1200.y;
+      pondDuckEls.push(d);
+
+      if (!isNew) {
+        d.style.left = slot.x + 'px'; d.style.top = slot.y + 'px';
+        d.classList.add('floating');
+        setDuckTransform(d, 1, "scale(0.85)");
+        d.style.zIndex = Math.floor(slot.y);
+        return;
+      }
+
+      triggerDuckQuack(d);
+      setTimeout(() => triggerDuckQuack(d), 2500);
+
+      const pathLen = path.getTotalLength(), start = performance.now();
       
-      // Add random drifting movement logic later if desired, for now they bob in place
-      
-      pond.appendChild(d);
-      
-      // Play Quack sound visual on creation
-      d.classList.add('quacking'); 
-      setTimeout(() => d.classList.remove('quacking'), 1000);
+      function frame(now) {
+        const elapsed = now - start;
+        
+        if (elapsed < 2500) {
+          const t = elapsed / 2500, pt = path.getPointAtLength(t * pathLen);
+          const px = { x: pt.x * (pondW/1200), y: pt.y * (pondH/700) };
+          d.style.left = px.x + 'px'; d.style.top = (px.y + Math.abs(Math.sin(now*0.01))* -6) + 'px';
+          setDuckTransform(d, -1, `scale(${1.6-t*0.4}) rotate(${Math.sin(now*0.01)*12}deg)`);
+          d.style.zIndex = Math.floor(px.y);
+        } else if (elapsed < 4500) {
+          const t = (elapsed - 2500) / 2000, endPt = path.getPointAtLength(pathLen);
+          const sX = endPt.x * (pondW/1200), sY = endPt.y * (pondH/700);
+          const curY = sY + (slot.y-sY)*t, curX = sX + (slot.x-sX)*t;
+          d.style.left = curX + 'px'; d.style.top = curY + 'px';
+          const finalFlip = slot.x > sX ? -1 : 1;
+          setDuckTransform(d, finalFlip, `scale(${1.2-t*0.35})`);
+          d.style.zIndex = Math.floor(curY);
+          if (t > 0.4) d.classList.add('floating');
+        }
+
+        let camScale = 1;
+        if (elapsed < 1000) {
+            const t = elapsed / 1000;
+            const ease = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            camScale = 1 + ease * 1.2;
+        } else if (elapsed < 3500) {
+            camScale = 2.2;
+        } else if (elapsed < 4500) {
+            const t = (elapsed - 3500) / 1000;
+            const ease = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            camScale = 2.2 - ease * 1.2;
+        }
+
+        const duckX = parseFloat(d.style.left);
+        const duckY = parseFloat(d.style.top);
+        let cX = pondW / 2 - duckX * camScale;
+        let cY = pondH / 2 - duckY * camScale;
+        
+        cX = Math.max(pondW - pondW * camScale, Math.min(0, cX));
+        cY = Math.max(pondH - pondH * camScale, Math.min(0, cY));
+        cameraEl.style.transform = `translate(${cX}px, ${cY}px) scale(${camScale})`;
+
+        if (elapsed < 4500) {
+          requestAnimationFrame(frame);
+        } else {
+          const pathEnd = path.getPointAtLength(pathLen);
+          const finalFlip = slot.x > (pathEnd.x * (pondW/1200)) ? -1 : 1;
+          d.style.left = slot.x + 'px'; d.style.top = slot.y + 'px';
+          setDuckTransform(d, finalFlip, "scale(0.85)");
+          d.style.zIndex = Math.floor(slot.y);
+          d.classList.add('floating');
+          cameraEl.style.transform = `translate(0px, 0px) scale(1)`; 
+        }
+      }
+      requestAnimationFrame(frame);
     }
 
-    /* --- FORM & MODAL --- */
-    const modal = document.getElementById('modalOverlay');
-    document.getElementById('openRsvpBtn').onclick = () => modal.style.display = 'flex';
-    function closeModal() { modal.style.display = 'none'; }
-    function toggleDetails() {
-      document.getElementById('detailsContent').classList.toggle('show');
-    }
+    // Toggle Form logic
+    function toggleForm(show) { document.getElementById('plankOverlay').classList.toggle('show', show); }
+    document.getElementById('standClickZone').onclick = () => toggleForm(true);
+
+    // Toggle Event Details Panel
+    document.getElementById('detailsHeader').onclick = () => {
+      const c = document.getElementById('detailsContent'); 
+      c.classList.toggle('show');
+      document.getElementById('detailsCaret').textContent = c.classList.contains('show') ? '▲' : '▼';
+    };
 
     document.getElementById('rsvpForm').onsubmit = (e) => {
       e.preventDefault();
-      const name = document.getElementById('nameInput').value;
-      const attending = document.querySelector('input[name="attending"]:checked').value;
-      
-      // Visual feedback: Main duck quacks excitedly
-      startQuacking();
-      
-      if (attending === 'Y' || attending === 'Maybe') {
-        // Generate new duckling immediately
-        createDuckling(name, attending === 'Y' ? 'Confirmed' : 'Maybe');
-      }
-      
-      // Backend submission
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
-      
-      if (typeof google !== 'undefined' && google.script) {
-        google.script.run.withSuccessHandler(() => {
-          alert("RSVP Saved!");
-          closeModal();
-        }).saveRSVP(data);
-      } else {
-        // Demo mode
-        setTimeout(() => { alert("Demo: RSVP Saved"); closeModal(); }, 500);
-      }
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true; btn.textContent = "Sending Quack...";
+      const data = Object.fromEntries(new FormData(e.target).entries());
+      google.script.run
+        .withSuccessHandler(() => {
+          isGreeting = true; 
+          document.getElementById('lsSpeechText').textContent = `Welcome, ${data.name}!`; 
+          document.getElementById('lsSpeech').classList.remove('hidden');
+          if (data.attending !== 'N') spawnDuck(data.name, true);
+          toggleForm(false);
+          e.target.reset(); 
+          btn.disabled = false; btn.textContent = "Submit RSVP (Quack!)";
+          setTimeout(() => { isGreeting = false; document.getElementById('lsSpeech').classList.add('hidden'); }, 15000);
+        })
+        .withFailureHandler(() => { btn.disabled = false; btn.textContent = "Error!"; })
+        .saveRSVP(data); 
     };
 
-    /* --- INITIALIZATION --- */
     window.onload = () => {
-      // Load existing RSVPs
+      // Audio unlocker
+      document.body.addEventListener('click', function unlockAudio() {
+        quack.volume = 0; 
+        quack.play().then(() => {
+            quack.pause();
+            quack.currentTime = 0;
+            quack.volume = 0.4; 
+        }).catch(() => {});
+        document.body.removeEventListener('click', unlockAudio);
+      }, { once: true });
+
+      // Populate Event Details
+      document.getElementById('event-title').textContent = "Callie's Duck Pond Party";
+      document.getElementById('event-date').textContent = "Saturday, April 26 @ 1:00 PM";
+      document.getElementById('event-location').textContent = "Crescent Park";
+      document.getElementById('event-desc').textContent = "Join us for a quacking good time! We'll have bubbles, snacks, and drinks.";
+      document.getElementById('event-location-details').textContent = "340 Crescent Ave in Wyoming Ohio. Access via Wyoming Ave for parking.";
+      document.getElementById('gifts-details').textContent = "Pink, Ducks, Stickers, size 3T.";
+
+      startSpeechLoop();
+      startGlideLoop();
+      startQuackLoop();
+      
+      // Auto-open form on mobile
+      if (window.innerWidth <= 768) {
+        toggleForm(true);
+      }
+
+      // Google Script Initialization
       if (typeof google !== 'undefined' && google.script) {
-        google.script.run.withSuccessHandler((rsvps) => {
-          rsvps.forEach(r => {
-             if(r.attending === 'Y') createDuckling(r.name, 'Confirmed');
-             else if(r.attending === 'Maybe') createDuckling(r.name, 'Maybe');
-          });
+        google.script.run.withSuccessHandler((b64) => { preloadedQuackAudio = b64; }).getQuackSound();
+        google.script.run.withSuccessHandler((gs) => {
+          if (gs) gs.forEach(g => { if (g && g.name) spawnDuck(g.name, false); });
         }).getExistingRsvps();
-      } else {
-        // Demo Data
-        createDuckling("Mama Duck", "Confirmed");
-        createDuckling("Baby Duck", "Maybe");
       }
     };
   </script>
