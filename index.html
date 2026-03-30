@@ -218,7 +218,7 @@
     // ==========================================
     // PASTE YOUR GOOGLE SCRIPT WEB APP URL HERE:
     // ==========================================
-    const WEB_APP_URL = "YOUR_WEB_APP_URL_HERE";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyMxSOFveoK2hlqQODbUxXz36xw_KyBMw_vkLbqO59JnPAKqQk9qeuX60rK2GcDImTp/exec";
 
 
     const ASSETS = {
@@ -535,7 +535,7 @@
     document.getElementById('rsvpForm').onsubmit = (e) => {
       e.preventDefault();
       
-      if (!WEB_APP_URL || WEB_APP_URL === "https://script.google.com/macros/s/AKfycbyMxSOFveoK2hlqQODbUxXz36xw_KyBMw_vkLbqO59JnPAKqQk9qeuX60rK2GcDImTp/exec") {
+      if (!WEB_APP_URL || WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
           alert("Oops! You forgot to paste your Web App URL into the Javascript!");
           return;
       }
