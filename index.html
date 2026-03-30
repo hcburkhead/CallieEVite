@@ -535,7 +535,7 @@
     document.getElementById('rsvpForm').onsubmit = (e) => {
       e.preventDefault();
       
-      if (!WEB_APP_URL || WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
+      if (!WEB_APP_URL || WEB_APP_URL === "https://script.google.com/macros/s/AKfycbyMxSOFveoK2hlqQODbUxXz36xw_KyBMw_vkLbqO59JnPAKqQk9qeuX60rK2GcDImTp/exec") {
           alert("Oops! You forgot to paste your Web App URL into the Javascript!");
           return;
       }
@@ -600,7 +600,7 @@
       }
 
       // Load initial data via Fetch instead of google.script.run
-      if (WEB_APP_URL && WEB_APP_URL !== "https://script.google.com/macros/s/AKfycbyMxSOFveoK2hlqQODbUxXz36xw_KyBMw_vkLbqO59JnPAKqQk9qeuX60rK2GcDImTp/exec") {
+      if (WEB_APP_URL && WEB_APP_URL !== "YOUR_WEB_APP_URL_HERE") {
         
         // Fetch audio
         fetch(`${WEB_APP_URL}?action=getQuackSound`)
