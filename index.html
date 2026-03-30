@@ -218,8 +218,7 @@
     // ==========================================
     // PASTE YOUR GOOGLE SCRIPT WEB APP URL HERE:
     // ==========================================
-    const WEB_APP_URL = "YOUR_WEB_APP_URL_HERE";
-
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxQUvLeNM8bebPswnVvok_WVCpYDdPyCv_WUm_l1vY/dev";
 
     const ASSETS = {
       LS_CLOSED: "https://i.imgur.com/DAZiu3E.png", 
@@ -244,6 +243,21 @@
 
     const POND_WATER = { cx: 780, cy: 510, rx: 280, ry: 85, margin: 0.85 };
     const DUCK_MIN_DIST = 70; 
+
+    // --- SECURITY: XSS Sanitization Function ---
+    function escapeHTML(str) {
+      if (!str) return "";
+      return String(str).replace(/[&<>'"]/g, function(tag) {
+        const charsToReplace = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;'
+        };
+        return charsToReplace[tag] || tag;
+      });
+    }
 
     function inPondWater(x, y) {
       if (x < 500) return false;
@@ -399,16 +413,54 @@
       function move(now) {
         const elapsed = now - startTime;
         const ease = Math.min(elapsed / duration, 1); 
-        const curX = startX + (targetX - startX) * ease, curY = startY + (targetY - startY) * ease;
-        d.style.left = curX + 'px'; d.style.top = curY + 'px'; d.style.zIndex = Math.floor(curY);
-        if (ease < 1) requestAnimationFrame(move);
-        else d.dataset.isGliding = "false";
+        
+        let curX = startX + (targetX - startX) * ease;
+        let curY = startY + (targetY - startY) * ease;
+
+        // --- COLLISION AVOIDANCE (Repulsion Vector) ---
+        // Pushes the duck away if it gets too close to others while moving
+        let repulseX = 0, repulseY = 0;
+        pondDuckEls.forEach(other => {
+          if (other !== d) {
+            const ox = parseFloat(other.style.left || 0);
+            const oy = parseFloat(other.style.top || 0);
+            const dx = curX - ox;
+            const dy = curY - oy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            // If another duck is within 60px, calculate a gentle push away
+            if (dist > 0 && dist < 60) {
+              const force = (60 - dist) / 60;
+              repulseX += (dx / dist) * force * 20; 
+              repulseY += (dy / dist) * force * 20;
+            }
+          }
+        });
+
+        // Apply repulsion, but fade it out near the end so the duck still hits its target
+        const distToTarget = Math.sqrt((targetX - curX)**2 + (targetY - curY)**2);
+        const repulsionStrength = Math.min(1, distToTarget / 40); 
+        curX += repulseX * repulsionStrength;
+        curY += repulseY * repulsionStrength;
+
+        // Apply position and strict z-indexing to fix any remaining clipping
+        d.style.left = curX + 'px'; 
+        d.style.top = curY + 'px'; 
+        d.style.zIndex = Math.floor(curY); // Dynamic depth sorting
+
+        if (ease < 1) {
+          requestAnimationFrame(move);
+        } else {
+          d.dataset.isGliding = "false";
+        }
       }
       requestAnimationFrame(move);
     }
 
     function spawnDuck(name, isNew = false) {
-      const safeName = (name || "Guest").trim();
+      // SECURITY: Sanitize the name before using it
+      const safeName = escapeHTML((name || "Guest").trim());
+      
       const isCallie = safeName.toLowerCase() === 'callie';
       
       if (isCallie) {
@@ -531,7 +583,7 @@
       document.getElementById('detailsCaret').textContent = c.classList.contains('show') ? '▲' : '▼';
     };
 
-    // Replace google.script.run with fetch() for saving form data
+    // Form Submit Fetch Logic
     document.getElementById('rsvpForm').onsubmit = (e) => {
       e.preventDefault();
       
@@ -546,14 +598,13 @@
       
       fetch(WEB_APP_URL, {
         method: 'POST',
-        // Note: sending as plain text to avoid complex CORS preflight issues
         body: JSON.stringify(data)
       })
       .then(res => res.json())
       .then(result => {
         if(result.status === 'success') {
           isGreeting = true; 
-          document.getElementById('lsSpeechText').textContent = `Welcome, ${data.name}!`; 
+          document.getElementById('lsSpeechText').textContent = `Welcome, ${escapeHTML(data.name)}!`; 
           document.getElementById('lsSpeech').classList.remove('hidden');
           if (data.attending !== 'N') spawnDuck(data.name, true);
           toggleForm(false);
@@ -594,21 +645,18 @@
       startGlideLoop();
       startQuackLoop();
       
-      // Auto-open form on mobile
       if (window.innerWidth <= 768) {
         toggleForm(true);
       }
 
-      // Load initial data via Fetch instead of google.script.run
+      // Load initial data via Fetch
       if (WEB_APP_URL && WEB_APP_URL !== "YOUR_WEB_APP_URL_HERE") {
         
-        // Fetch audio
         fetch(`${WEB_APP_URL}?action=getQuackSound`)
           .then(res => res.json())
           .then(data => { if(data.audio) preloadedQuackAudio = data.audio; })
           .catch(err => console.error("Failed to load audio", err));
 
-        // Fetch existing guests
         fetch(`${WEB_APP_URL}?action=getExistingRsvps`)
           .then(res => res.json())
           .then(guests => {
