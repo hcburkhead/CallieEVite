@@ -163,11 +163,10 @@
 
 <body>
   <div class="page-wrapper">
-    <h1>Callie's Duck Party</h1>
-    <!-- <h3><strong><i>I'm turning 3!</i></strong></h3> -->
+    <h1>Callie's Duck Pond Party</h1>
 
     <div class="event-details-panel">
-      <h3 id="detailsHeader">Click for Event Details <span id="detailsCaret">▼</span></h3>
+      <h3 id="detailsHeader">Event Details <span id="detailsCaret">▼</span></h3>
       <div class="event-details-content" id="detailsContent">
         <h2 id="event-title"></h2>
         <p id="event-desc"></p>
@@ -216,6 +215,12 @@
   <audio id="quackSound" src="https://www.soundjay.com/nature/sounds/duck-quack-1.mp3" preload="auto"></audio>
 
   <script>
+    // ==========================================
+    // PASTE YOUR GOOGLE SCRIPT WEB APP URL HERE:
+    // ==========================================
+    const WEB_APP_URL = "YOUR_WEB_APP_URL_HERE";
+
+
     const ASSETS = {
       LS_CLOSED: "https://i.imgur.com/DAZiu3E.png", 
       LS_OPEN: "https://i.imgur.com/nl9v3EX.png",
@@ -526,13 +531,27 @@
       document.getElementById('detailsCaret').textContent = c.classList.contains('show') ? '▲' : '▼';
     };
 
+    // Replace google.script.run with fetch() for saving form data
     document.getElementById('rsvpForm').onsubmit = (e) => {
       e.preventDefault();
+      
+      if (!WEB_APP_URL || WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
+          alert("Oops! You forgot to paste your Web App URL into the Javascript!");
+          return;
+      }
+
       const btn = document.getElementById('submitBtn');
       btn.disabled = true; btn.textContent = "Sending Quack...";
       const data = Object.fromEntries(new FormData(e.target).entries());
-      google.script.run
-        .withSuccessHandler(() => {
+      
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        // Note: sending as plain text to avoid complex CORS preflight issues
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(result => {
+        if(result.status === 'success') {
           isGreeting = true; 
           document.getElementById('lsSpeechText').textContent = `Welcome, ${data.name}!`; 
           document.getElementById('lsSpeech').classList.remove('hidden');
@@ -541,9 +560,14 @@
           e.target.reset(); 
           btn.disabled = false; btn.textContent = "Submit RSVP (Quack!)";
           setTimeout(() => { isGreeting = false; document.getElementById('lsSpeech').classList.add('hidden'); }, 15000);
-        })
-        .withFailureHandler(() => { btn.disabled = false; btn.textContent = "Error!"; })
-        .saveRSVP(data); 
+        } else {
+          throw new Error(result.message);
+        }
+      })
+      .catch((err) => { 
+        console.error(err);
+        btn.disabled = false; btn.textContent = "Error!"; 
+      }); 
     };
 
     window.onload = () => {
@@ -575,12 +599,22 @@
         toggleForm(true);
       }
 
-      // Google Script Initialization
-      if (typeof google !== 'undefined' && google.script) {
-        google.script.run.withSuccessHandler((b64) => { preloadedQuackAudio = b64; }).getQuackSound();
-        google.script.run.withSuccessHandler((gs) => {
-          if (gs) gs.forEach(g => { if (g && g.name) spawnDuck(g.name, false); });
-        }).getExistingRsvps();
+      // Load initial data via Fetch instead of google.script.run
+      if (WEB_APP_URL && WEB_APP_URL !== "https://script.google.com/macros/s/AKfycbyMxSOFveoK2hlqQODbUxXz36xw_KyBMw_vkLbqO59JnPAKqQk9qeuX60rK2GcDImTp/exec") {
+        
+        // Fetch audio
+        fetch(`${WEB_APP_URL}?action=getQuackSound`)
+          .then(res => res.json())
+          .then(data => { if(data.audio) preloadedQuackAudio = data.audio; })
+          .catch(err => console.error("Failed to load audio", err));
+
+        // Fetch existing guests
+        fetch(`${WEB_APP_URL}?action=getExistingRsvps`)
+          .then(res => res.json())
+          .then(guests => {
+            if (guests) guests.forEach(g => { if (g && g.name) spawnDuck(g.name, false); });
+          })
+          .catch(err => console.error("Failed to load guests", err));
       }
     };
   </script>
