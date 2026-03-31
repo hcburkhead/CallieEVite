@@ -162,14 +162,34 @@
         <button type="button" onclick="toggleForm(false)" style="background:red; color:white; border:none; cursor:pointer; padding:4px 12px; border-radius:4px; font-weight:bold; font-size:16px;">✕</button>
       </div>
       <form id="rsvpForm">
-        <div><label>Your Name</label><input name="name" type="text" required /></div>
-        <div><label>Email</label><input name="email" type="email" required /></div>
-        <div><label>Phone</label><input name="phone" type="tel" /></div>
-        <div><label>Guests</label><input name="guests" type="number" value="1" min="1" /></div>
-        <div class="full"><label>Attending?</label>
-          <select name="attending"><option value="Y">Yes!</option><option value="Maybe">Maybe</option><option value="N">No</option></select>
+        <div>
+          <label>Your Name</label>
+          <input name="name" type="text" required pattern="^[A-Za-zÀ-ÿ\s\-']+$" title="Please enter a valid name (letters, spaces, hyphens, and apostrophes only)." />
         </div>
-        <div class="full"><label>Comments</label><textarea name="comments" rows="2"></textarea></div>
+        <div>
+          <label>Email</label>
+          <input name="email" type="email" required pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address (e.g., ducky@example.com)." />
+        </div>
+        <div>
+          <label>Phone</label>
+          <input name="phone" type="tel" required pattern="^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$" title="Please enter a valid 10-digit phone number (e.g., 555-123-4567)." />
+        </div>
+        <div>
+          <label>Guests</label>
+          <input name="guests" type="number" value="1" min="1" required title="Please enter at least 1 guest." />
+        </div>
+        <div class="full">
+          <label>Attending?</label>
+          <select name="attending" required>
+            <option value="Y">Yes!</option>
+            <option value="Maybe">Maybe</option>
+            <option value="N">No</option>
+          </select>
+        </div>
+        <div class="full">
+          <label>Comments</label>
+          <textarea name="comments" rows="2"></textarea>
+        </div>
         <button id="submitBtn" class="action-btn full" type="submit">Submit RSVP (Quack!)</button>
       </form>
     </div>
