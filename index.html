@@ -442,7 +442,7 @@
     function resetCameraZoom() {
       if (window.innerWidth <= 768) {
         cameraEl.style.transition = "transform 1.2s ease-in-out";
-        cameraEl.style.transformOrigin = "15% 78%";
+        cameraEl.style.transformOrigin = "2% 85%";
         cameraEl.style.transform = "scale(1)";
         setTimeout(() => {
           cameraEl.style.transition = ""; 
@@ -529,9 +529,9 @@
         document.getElementById('detailsCaret').textContent = '▲';
         document.getElementById('closeDetailsBtn').style.display = 'inline-block';
         
-        // Exact framing to match your screenshot
-        cameraEl.style.transformOrigin = "15% 78%";
-        cameraEl.style.transform = "scale(2.8)";
+        // Anchor to bottom-left so the "C" and speech bubble don't get cut off
+        cameraEl.style.transformOrigin = "2% 85%";
+        cameraEl.style.transform = "scale(2.1)";
       }
 
       // Load initial data via Fetch
