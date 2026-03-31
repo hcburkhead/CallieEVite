@@ -178,9 +178,6 @@
   <audio id="quackSound" src="https://www.soundjay.com/nature/sounds/duck-quack-1.mp3" preload="auto"></audio>
 
   <script>
-    // ==========================================
-    // PASTE YOUR GOOGLE SCRIPT WEB APP URL HERE:
-    // ==========================================
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyMxSOFveoK2hlqQODbUxXz36xw_KyBMw_vkLbqO59JnPAKqQk9qeuX60rK2GcDImTp/exec";
 
     const ASSETS = {
@@ -445,7 +442,7 @@
     function resetCameraZoom() {
       if (window.innerWidth <= 768) {
         cameraEl.style.transition = "transform 1.2s ease-in-out";
-        cameraEl.style.transformOrigin = "15% 80%";
+        cameraEl.style.transformOrigin = "8% 85%";
         cameraEl.style.transform = "scale(1)";
         setTimeout(() => {
           cameraEl.style.transition = ""; 
@@ -477,8 +474,7 @@
     // Form Submit
     document.getElementById('rsvpForm').onsubmit = (e) => {
       e.preventDefault();
-      if (!WEB_APP_URL || WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") { alert("Oops! You forgot to paste your Web App URL!"); return; }
-
+      
       const btn = document.getElementById('submitBtn');
       btn.disabled = true; btn.textContent = "Sending Quack...";
       const data = Object.fromEntries(new FormData(e.target).entries());
@@ -533,13 +529,13 @@
         document.getElementById('detailsCaret').textContent = '▲';
         document.getElementById('closeDetailsBtn').style.display = 'inline-block';
         
-        // Initial zoom to hide pond
-        cameraEl.style.transformOrigin = "15% 80%";
-        cameraEl.style.transform = "scale(2.5)";
+        // Tighter zoom shifted slightly left to guarantee no pond ducks show up
+        cameraEl.style.transformOrigin = "8% 85%";
+        cameraEl.style.transform = "scale(3.2)";
       }
 
       // Load initial data via Fetch
-      if (WEB_APP_URL && WEB_APP_URL !== "YOUR_WEB_APP_URL_HERE") {
+      if (WEB_APP_URL) {
         fetch(`${WEB_APP_URL}?action=getQuackSound`)
           .then(res => res.json())
           .then(data => { if(data.audio) preloadedQuackAudio = data.audio; })
