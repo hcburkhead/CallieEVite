@@ -442,7 +442,7 @@
     function resetCameraZoom() {
       if (window.innerWidth <= 768) {
         cameraEl.style.transition = "transform 1.2s ease-in-out";
-        cameraEl.style.transformOrigin = "8% 85%";
+        cameraEl.style.transformOrigin = "15% 78%";
         cameraEl.style.transform = "scale(1)";
         setTimeout(() => {
           cameraEl.style.transition = ""; 
@@ -529,9 +529,9 @@
         document.getElementById('detailsCaret').textContent = '▲';
         document.getElementById('closeDetailsBtn').style.display = 'inline-block';
         
-        // Tighter zoom shifted slightly left to guarantee no pond ducks show up
-        cameraEl.style.transformOrigin = "8% 85%";
-        cameraEl.style.transform = "scale(3.2)";
+        // Exact framing to match your screenshot
+        cameraEl.style.transformOrigin = "15% 78%";
+        cameraEl.style.transform = "scale(2.8)";
       }
 
       // Load initial data via Fetch
